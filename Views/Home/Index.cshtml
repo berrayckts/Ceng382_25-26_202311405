@@ -1,15 +1,52 @@
+@model Ceng382_25_26_202311405.ViewModels.HomeIndexViewModel
 @{
-    ViewData["Title"] = "Week 4";
+    ViewData["Title"] = "Home";
 }
 
-<div class="content-card">
-    <div class="section-heading">
-        <div>
-            <span class="section-kicker">Redirect</span>
-            <h2>Week 4 Registration</h2>
+<section class="page-shell">
+    <section class="content-card dashboard-card">
+        <div class="section-heading section-heading--tight">
+            <div>
+                <h2>Registered Users</h2>
+            </div>
+            <span class="count-pill">@Model.RegisteredUsers.Count user(s)</span>
         </div>
-        <p>This branch uses the Identity Register page as the main working screen.</p>
-    </div>
 
-    <a class="btn btn-register" asp-area="Identity" asp-page="/Account/Register">Go to Register Page</a>
-</div>
+        @if (Model.RegisteredUsers.Count == 0)
+        {
+            <div class="empty-state">
+                No registered users yet. Click Register to add the first user.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table user-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Surname</th>
+                            <th>Email</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var user in Model.RegisteredUsers)
+                    {
+                        <tr>
+                            <td>
+                                <img class="user-thumb" src="@user.DisplayPhotoPath" alt="@($"{user.Name} {user.Surname}")" />
+                            </td>
+                            <td>@user.Name</td>
+                            <td>@user.Surname</td>
+                            <td>@user.Email</td>
+                            <td>@user.Address</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</section>

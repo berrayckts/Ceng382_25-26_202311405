@@ -44,8 +44,6 @@ public class RegisterModel : PageModel
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
-    public IList<RegisteredUserViewModel> RegisteredUsers { get; private set; } = [];
-
     [TempData]
     public string? StatusMessage { get; set; }
 
@@ -54,13 +52,12 @@ public class RegisterModel : PageModel
     public async Task OnGetAsync(string? returnUrl = null)
     {
         ReturnUrl = returnUrl;
-        await LoadRegisteredUsersAsync();
+        await Task.CompletedTask;
     }
 
     public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
     {
         ReturnUrl = returnUrl;
-        await LoadRegisteredUsersAsync();
 
         if (Input.ProfilePhoto is not null)
         {
@@ -108,7 +105,7 @@ public class RegisterModel : PageModel
                     }
                 }
 
-                return RedirectToPage();
+                return RedirectToAction("Index", "Home", new { area = string.Empty });
             }
 
             DeletePhotoIfExists(savedPhotoPath);
@@ -125,23 +122,6 @@ public class RegisterModel : PageModel
         }
 
         return Page();
-    }
-
-    private async Task LoadRegisteredUsersAsync()
-    {
-        RegisteredUsers = await _dbContext.Users
-            .AsNoTracking()
-            .OrderBy(user => user.Name)
-            .ThenBy(user => user.Surname)
-            .Select(user => new RegisteredUserViewModel
-            {
-                Name = user.Name,
-                Surname = user.Surname,
-                Email = user.Email ?? string.Empty,
-                Address = user.Address,
-                ProfilePhotoPath = user.ProfilePhotoPath
-            })
-            .ToListAsync();
     }
 
     private void ValidatePhoto(IFormFile photo)

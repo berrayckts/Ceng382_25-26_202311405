@@ -5,21 +5,6 @@
 }
 
 <section class="page-shell">
-    <div class="hero-block">
-        <div>
-            <span class="hero-kicker">Week 4 Lab</span>
-            <h1 class="hero-title">Identity Registration Studio</h1>
-            <p class="hero-text">
-                Register new users with a profile photo and keep the saved records visible in a clean MVC-friendly dashboard.
-            </p>
-        </div>
-        <div class="hero-badge">
-            <span class="hero-badge-label">Database</span>
-            <strong>@Model.RegisteredUsers.Count</strong>
-            <span class="hero-badge-note">registered users</span>
-        </div>
-    </div>
-
     @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
     {
         <div class="alert alert-success shadow-sm border-0 status-alert" role="alert">
@@ -27,60 +12,12 @@
         </div>
     }
 
-    <section class="content-card">
-        <div class="section-heading">
+    <section class="content-card form-card form-card--compact">
+        <div class="section-heading section-heading--center">
             <div>
-                <span class="section-kicker">Top Section</span>
-                <h2>Registered Users</h2>
+                <h2>Register</h2>
             </div>
-            <p>Every successful registration is saved in the database and listed here.</p>
-        </div>
-
-        @if (Model.RegisteredUsers.Count == 0)
-        {
-            <div class="empty-state">
-                No users have been registered yet. Use the form below to add the first one.
-            </div>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table user-table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Photo</th>
-                            <th>Name</th>
-                            <th>Surname</th>
-                            <th>Email</th>
-                            <th>Address</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach (var user in Model.RegisteredUsers)
-                    {
-                        <tr>
-                            <td>
-                                <img class="user-thumb" src="@user.DisplayPhotoPath" alt="@($"{user.Name} {user.Surname}")" />
-                            </td>
-                            <td>@user.Name</td>
-                            <td>@user.Surname</td>
-                            <td>@user.Email</td>
-                            <td>@user.Address</td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </section>
-
-    <section class="content-card form-card">
-        <div class="section-heading">
-            <div>
-                <span class="section-kicker">Form Area</span>
-                <h2>Create a New Account</h2>
-            </div>
-            <p>Fill in all required fields, upload an optional photo, and save the user with Identity.</p>
+            <p>Create your account and complete your profile.</p>
         </div>
 
         <form id="registerForm" method="post" enctype="multipart/form-data" asp-route-returnUrl="@Model.ReturnUrl" class="row g-4">

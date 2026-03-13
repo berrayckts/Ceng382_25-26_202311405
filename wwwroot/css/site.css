@@ -72,7 +72,6 @@ a {
   margin-top: 0.75rem;
 }
 
-.hero-block,
 .content-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -81,68 +80,19 @@ a {
   backdrop-filter: blur(10px);
 }
 
-.hero-block {
-  display: flex;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding: 2rem;
-  align-items: center;
-}
-
-.hero-kicker,
-.section-kicker {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  padding: 0 0.85rem;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-deep);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero-title {
-  margin: 0.9rem 0 0.75rem;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 1.05;
-}
-
-.hero-text {
-  max-width: 42rem;
-  margin: 0;
-  color: var(--muted);
-  font-size: 1.02rem;
-  line-height: 1.7;
-}
-
-.hero-badge {
-  min-width: 12rem;
-  padding: 1.3rem 1.4rem;
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(201, 116, 78, 0.16), rgba(255, 255, 255, 0.5));
-  border: 1px solid rgba(201, 116, 78, 0.2);
-  text-align: center;
-}
-
-.hero-badge-label,
-.hero-badge-note {
-  display: block;
-  color: var(--muted);
-}
-
-.hero-badge strong {
-  display: block;
-  margin: 0.35rem 0;
-  font-size: 2.5rem;
-  line-height: 1;
-}
-
 .status-alert,
 .content-card {
   padding: 1.5rem;
+}
+
+.form-card--compact {
+  width: min(100%, 620px);
+  justify-self: center;
+}
+
+.dashboard-card {
+  width: min(100%, 980px);
+  justify-self: center;
 }
 
 .section-heading {
@@ -153,8 +103,18 @@ a {
   align-items: end;
 }
 
+.section-heading--center {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.section-heading--tight {
+  margin-bottom: 0.75rem;
+}
+
 .section-heading h2 {
-  margin: 0.8rem 0 0;
+  margin: 0;
   font-size: 1.9rem;
 }
 
@@ -163,6 +123,19 @@ a {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .empty-state {
@@ -182,7 +155,8 @@ a {
   background: #3f362f;
   color: #fff7ef;
   border-bottom: 0;
-  padding: 1rem;
+  padding: 0.8rem 1rem;
+  font-size: 0.92rem;
 }
 
 .user-table tbody tr {
@@ -194,16 +168,17 @@ a {
 }
 
 .user-table td {
-  padding: 1rem;
+  padding: 0.85rem 1rem;
   border-color: rgba(125, 91, 67, 0.12);
   vertical-align: middle;
+  font-size: 0.95rem;
 }
 
 .user-thumb {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 18px rgba(92, 61, 44, 0.12);
 }
@@ -212,7 +187,7 @@ a {
   border-radius: 16px;
   border: 1px solid rgba(125, 91, 67, 0.18);
   background: rgba(255, 255, 255, 0.82);
-  padding: 0.9rem 1rem;
+  padding: 0.8rem 0.95rem;
 }
 
 .form-card .form-control:focus {
@@ -225,12 +200,30 @@ a {
   margin-bottom: 0.45rem;
 }
 
+.form-card .section-heading {
+  margin-bottom: 1rem;
+}
+
+.form-card .section-heading h2 {
+  font-size: 2rem;
+}
+
+.form-card .section-heading p {
+  max-width: 20rem;
+  font-size: 0.95rem;
+}
+
+.form-card form.row {
+  --bs-gutter-x: 1rem;
+  --bs-gutter-y: 1rem;
+}
+
 .btn-register {
   border: 0;
   border-radius: 999px;
   background: var(--accent);
   color: #fff;
-  padding: 0.9rem 1.4rem;
+  padding: 0.8rem 1.3rem;
   font-weight: 700;
   box-shadow: 0 12px 24px rgba(201, 116, 78, 0.22);
 }
@@ -247,15 +240,9 @@ a {
 }
 
 @media (max-width: 991.98px) {
-  .hero-block,
   .section-heading {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .hero-badge {
-    min-width: 0;
-    width: 100%;
   }
 }
 
@@ -270,9 +257,12 @@ a {
     border-radius: 22px;
   }
 
-  .hero-block,
   .status-alert,
   .content-card {
     padding: 1.25rem;
+  }
+
+  .form-card--compact {
+    width: 100%;
   }
 }
