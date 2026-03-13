@@ -1,0 +1,141 @@
+@page
+@model Ceng382_25_26_202311405.Areas.Identity.Pages.Account.RegisterModel
+@{
+    ViewData["Title"] = "Week 4 Registration";
+}
+
+<section class="page-shell">
+    <div class="hero-block">
+        <div>
+            <span class="hero-kicker">Week 4 Lab</span>
+            <h1 class="hero-title">Identity Registration Studio</h1>
+            <p class="hero-text">
+                Register new users with a profile photo and keep the saved records visible in a clean MVC-friendly dashboard.
+            </p>
+        </div>
+        <div class="hero-badge">
+            <span class="hero-badge-label">Database</span>
+            <strong>@Model.RegisteredUsers.Count</strong>
+            <span class="hero-badge-note">registered users</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="alert alert-success shadow-sm border-0 status-alert" role="alert">
+            @Model.StatusMessage
+        </div>
+    }
+
+    <section class="content-card">
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">Top Section</span>
+                <h2>Registered Users</h2>
+            </div>
+            <p>Every successful registration is saved in the database and listed here.</p>
+        </div>
+
+        @if (Model.RegisteredUsers.Count == 0)
+        {
+            <div class="empty-state">
+                No users have been registered yet. Use the form below to add the first one.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table user-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Surname</th>
+                            <th>Email</th>
+                            <th>Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var user in Model.RegisteredUsers)
+                    {
+                        <tr>
+                            <td>
+                                <img class="user-thumb" src="@user.DisplayPhotoPath" alt="@($"{user.Name} {user.Surname}")" />
+                            </td>
+                            <td>@user.Name</td>
+                            <td>@user.Surname</td>
+                            <td>@user.Email</td>
+                            <td>@user.Address</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="content-card form-card">
+        <div class="section-heading">
+            <div>
+                <span class="section-kicker">Form Area</span>
+                <h2>Create a New Account</h2>
+            </div>
+            <p>Fill in all required fields, upload an optional photo, and save the user with Identity.</p>
+        </div>
+
+        <form id="registerForm" method="post" enctype="multipart/form-data" asp-route-returnUrl="@Model.ReturnUrl" class="row g-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Name" class="form-label"></label>
+                <input asp-for="Input.Name" class="form-control form-control-lg" />
+                <span asp-validation-for="Input.Name" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Surname" class="form-label"></label>
+                <input asp-for="Input.Surname" class="form-control form-control-lg" />
+                <span asp-validation-for="Input.Surname" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Input.Address" class="form-label"></label>
+                <textarea asp-for="Input.Address" class="form-control form-control-lg" rows="3"></textarea>
+                <span asp-validation-for="Input.Address" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control form-control-lg" autocomplete="username" />
+                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.ProfilePhoto" class="form-label"></label>
+                <input asp-for="Input.ProfilePhoto" class="form-control form-control-lg" accept=".jpg,.jpeg,.png,.gif,.webp" />
+                <div class="form-text">Allowed: JPG, PNG, GIF, WEBP. Max size: 2 MB.</div>
+                <span asp-validation-for="Input.ProfilePhoto" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-control form-control-lg" autocomplete="new-password" />
+                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control form-control-lg" autocomplete="new-password" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <button id="registerSubmit" type="submit" class="btn btn-register">Register User</button>
+            </div>
+        </form>
+    </section>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
