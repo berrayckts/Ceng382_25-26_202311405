@@ -1,4 +1,8 @@
-﻿<!doctype html>
+﻿@using Week3
+@{
+    var students = GradeCalculator.BuildSampleStudents();
+}
+<!doctype html>
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
@@ -44,9 +48,16 @@
             </tr>
           </thead>
           <tbody>
-            <tr><td>1</td><td>Ayse</td><td class="midterm">70</td><td class="final">80</td><td class="letter-grade">-</td></tr>
-            <tr><td>2</td><td>Mehmet</td><td class="midterm">55</td><td class="final">60</td><td class="letter-grade">-</td></tr>
-            <tr><td>3</td><td>Zeynep</td><td class="midterm">90</td><td class="final">95</td><td class="letter-grade">-</td></tr>
+            @for (var i = 0; i < students.Count; i++)
+            {
+              <tr>
+                <td>@(i + 1)</td>
+                <td>@students[i].Name</td>
+                <td class="midterm">@students[i].Midterm</td>
+                <td class="final">@students[i].Final</td>
+                <td class="letter-grade">-</td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
