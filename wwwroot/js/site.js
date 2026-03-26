@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     gallery.hidden = false;
     galleryState.hidden = true;
-    loadGalleryButton.textContent = "Gallery Loaded";
+    loadGalleryButton.textContent = "Gallery Ready";
     loadGalleryButton.disabled = true;
   });
 });

@@ -7,20 +7,20 @@
 <section class="page-shell">
     <section class="content-card hero-panel">
         <div class="hero-panel__content">
-            <span class="eyebrow-pill">Week 3 Showcase</span>
-            <h1 class="hero-panel__title">Identity dashboard, gallery and carousel in one warm interface.</h1>
+            <span class="eyebrow-pill">Student Panel</span>
+            <h1 class="hero-panel__title">Registered users, gallery and profile cards in one page.</h1>
             <p class="hero-panel__text">
-                Registered users stay visible at the top, while the sections below present the same data
-                in two different display methods inspired by the class demo.
+                The top section keeps the user table visible, and the blocks below present the same users
+                in a softer gallery and slider layout inspired by the classroom example.
             </p>
         </div>
         <div class="hero-panel__stats">
             <article class="mini-stat">
-                <span class="mini-stat__label">Registered Users</span>
+                <span class="mini-stat__label">Users</span>
                 <strong class="mini-stat__value">@Model.RegisteredUsers.Count</strong>
             </article>
             <article class="mini-stat">
-                <span class="mini-stat__label">Gallery Items</span>
+                <span class="mini-stat__label">Photos</span>
                 <strong class="mini-stat__value">@featuredUsers.Count</strong>
             </article>
         </div>
@@ -30,7 +30,7 @@
         <div class="section-heading section-heading--tight">
             <div>
                 <h2>Registered Users</h2>
-                <p>User list collected from the Identity registration flow.</p>
+                <p>A simple table showing everyone registered in the system.</p>
             </div>
             <span class="count-pill">@Model.RegisteredUsers.Count user(s)</span>
         </div>
@@ -76,8 +76,8 @@
     <section class="content-card dashboard-card">
         <div class="section-heading section-heading--tight">
             <div>
-                <h2>JS Method (Gallery)</h2>
-                <p>Load user photos into a small client-side gallery without leaving the home page.</p>
+                <h2>User Gallery</h2>
+                <p>Open a small image gallery for the users shown on this page.</p>
             </div>
             <span class="count-pill">@featuredUsers.Count image(s)</span>
         </div>
@@ -101,7 +101,7 @@
             </div>
 
             <button id="loadGalleryBtn" class="btn-register gallery-btn" type="button">
-                Load Gallery
+                Open Gallery
             </button>
         </div>
     </section>
@@ -109,8 +109,8 @@
     <section class="content-card dashboard-card">
         <div class="section-heading section-heading--tight">
             <div>
-                <h2>C# Method (Carousel)</h2>
-                <p>Server-rendered user cards presented as a smooth carousel block.</p>
+                <h2>Featured Profiles</h2>
+                <p>Browse user cards in a simple slider section.</p>
             </div>
             <span class="count-pill">@featuredUsers.Count slide(s)</span>
         </div>
@@ -145,7 +145,7 @@
                             <article class="carousel-card">
                                 <img class="carousel-card__image" src="@user.DisplayPhotoPath" alt="@($"{user.Name} {user.Surname}")" />
                                 <div class="carousel-card__body">
-                                    <span class="eyebrow-pill eyebrow-pill--soft">Featured User</span>
+                                    <span class="eyebrow-pill eyebrow-pill--soft">Profile Card</span>
                                     <h3>@user.Name @user.Surname</h3>
                                     <p>@user.Address</p>
                                     <a href="mailto:@user.Email" class="carousel-card__link">@user.Email</a>
