@@ -1,13 +1,36 @@
 @model Ceng382_25_26_202311405.ViewModels.HomeIndexViewModel
 @{
     ViewData["Title"] = "Home";
+    var featuredUsers = Model.RegisteredUsers.Take(5).ToList();
 }
 
 <section class="page-shell">
+    <section class="content-card hero-panel">
+        <div class="hero-panel__content">
+            <span class="eyebrow-pill">Week 3 Showcase</span>
+            <h1 class="hero-panel__title">Identity dashboard, gallery and carousel in one warm interface.</h1>
+            <p class="hero-panel__text">
+                Registered users stay visible at the top, while the sections below present the same data
+                in two different display methods inspired by the class demo.
+            </p>
+        </div>
+        <div class="hero-panel__stats">
+            <article class="mini-stat">
+                <span class="mini-stat__label">Registered Users</span>
+                <strong class="mini-stat__value">@Model.RegisteredUsers.Count</strong>
+            </article>
+            <article class="mini-stat">
+                <span class="mini-stat__label">Gallery Items</span>
+                <strong class="mini-stat__value">@featuredUsers.Count</strong>
+            </article>
+        </div>
+    </section>
+
     <section class="content-card dashboard-card">
         <div class="section-heading section-heading--tight">
             <div>
                 <h2>Registered Users</h2>
+                <p>User list collected from the Identity registration flow.</p>
             </div>
             <span class="count-pill">@Model.RegisteredUsers.Count user(s)</span>
         </div>
@@ -46,6 +69,100 @@
                     }
                     </tbody>
                 </table>
+            </div>
+        }
+    </section>
+
+    <section class="content-card dashboard-card">
+        <div class="section-heading section-heading--tight">
+            <div>
+                <h2>JS Method (Gallery)</h2>
+                <p>Load user photos into a small client-side gallery without leaving the home page.</p>
+            </div>
+            <span class="count-pill">@featuredUsers.Count image(s)</span>
+        </div>
+
+        <div class="gallery-panel">
+            <div id="galleryState" class="gallery-empty">
+                No images loaded yet. Click the button to reveal the gallery.
+            </div>
+
+            <div id="userGallery" class="user-gallery" hidden>
+                @foreach (var user in featuredUsers)
+                {
+                    <article class="gallery-tile">
+                        <img src="@user.DisplayPhotoPath" alt="@($"{user.Name} {user.Surname}")" />
+                        <div class="gallery-tile__body">
+                            <strong>@user.Name @user.Surname</strong>
+                            <span>@user.Email</span>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <button id="loadGalleryBtn" class="btn-register gallery-btn" type="button">
+                Load Gallery
+            </button>
+        </div>
+    </section>
+
+    <section class="content-card dashboard-card">
+        <div class="section-heading section-heading--tight">
+            <div>
+                <h2>C# Method (Carousel)</h2>
+                <p>Server-rendered user cards presented as a smooth carousel block.</p>
+            </div>
+            <span class="count-pill">@featuredUsers.Count slide(s)</span>
+        </div>
+
+        @if (featuredUsers.Count == 0)
+        {
+            <div class="empty-state">
+                Carousel items will appear here after the first user registration.
+            </div>
+        }
+        else
+        {
+            <div id="registeredUsersCarousel" class="carousel slide user-carousel" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    @for (var i = 0; i < featuredUsers.Count; i++)
+                    {
+                        <button type="button"
+                                data-bs-target="#registeredUsersCarousel"
+                                data-bs-slide-to="@i"
+                                class="@(i == 0 ? "active" : null)"
+                                aria-current="@(i == 0 ? "true" : null)"
+                                aria-label="Slide @(i + 1)"></button>
+                    }
+                </div>
+
+                <div class="carousel-inner">
+                    @for (var i = 0; i < featuredUsers.Count; i++)
+                    {
+                        var user = featuredUsers[i];
+
+                        <div class="carousel-item @(i == 0 ? "active" : null)">
+                            <article class="carousel-card">
+                                <img class="carousel-card__image" src="@user.DisplayPhotoPath" alt="@($"{user.Name} {user.Surname}")" />
+                                <div class="carousel-card__body">
+                                    <span class="eyebrow-pill eyebrow-pill--soft">Featured User</span>
+                                    <h3>@user.Name @user.Surname</h3>
+                                    <p>@user.Address</p>
+                                    <a href="mailto:@user.Email" class="carousel-card__link">@user.Email</a>
+                                </div>
+                            </article>
+                        </div>
+                    }
+                </div>
+
+                <button class="carousel-control-prev" type="button" data-bs-target="#registeredUsersCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#registeredUsersCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
             </div>
         }
     </section>

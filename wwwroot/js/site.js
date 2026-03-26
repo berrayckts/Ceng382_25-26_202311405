@@ -1,4 +1,23 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+document.addEventListener("DOMContentLoaded", () => {
+  const loadGalleryButton = document.getElementById("loadGalleryBtn");
+  const gallery = document.getElementById("userGallery");
+  const galleryState = document.getElementById("galleryState");
 
-// Write your JavaScript code.
+  if (!loadGalleryButton || !gallery || !galleryState) {
+    return;
+  }
+
+  loadGalleryButton.addEventListener("click", () => {
+    const hasItems = gallery.children.length > 0;
+
+    if (!hasItems) {
+      galleryState.textContent = "There are no user images available right now.";
+      return;
+    }
+
+    gallery.hidden = false;
+    galleryState.hidden = true;
+    loadGalleryButton.textContent = "Gallery Loaded";
+    loadGalleryButton.disabled = true;
+  });
+});
