@@ -1,8 +1,29 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+
+# IDE folders
+.vs/
+.vscode/
+
+# Local tooling/cache folders accidentally created in repo
 .dotnet/
 .nuget/
 .templateengine/
-bin/
-obj/
-app.db
-app.db-shm
-app.db-wal
+
+# Database/local environment files
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+Desktop.ini
