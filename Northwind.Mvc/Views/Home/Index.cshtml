@@ -2,7 +2,29 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="py-4">
+    <h1 class="display-5 mb-3">Northwind Week 5</h1>
+    <p class="lead">Project is connected to the Northwind database and includes a custom Contact Info module.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h4">Contact Info CRUD</h2>
+                <p>Create, edit, view, and delete shipper contact records.</p>
+                <a asp-controller="ContactInfos" asp-action="Index" class="btn btn-primary">Open Contact Infos</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h4">Northwind Database</h2>
+                <p>Scaffolded EF Core models are ready under the Models folder.</p>
+                <a asp-controller="Home" asp-action="Privacy" class="btn btn-outline-secondary">Project Info</a>
+            </div>
+        </div>
+    </div>
 </div>
