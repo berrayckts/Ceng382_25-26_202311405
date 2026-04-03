@@ -1,0 +1,45 @@
+@model IEnumerable<Northwind.Mvc.Models.ShippersContactInfo>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Website</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>City</th>
+            <th>Country</th>
+            <th>PostalCode</th>
+            <th>Shipper</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Email</td>
+            <td>@item.Website</td>
+            <td>@item.Phone</td>
+            <td>@item.Address</td>
+            <td>@item.City</td>
+            <td>@item.Country</td>
+            <td>@item.PostalCode</td>
+            <td>@item.Shipper</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.ShippersContactInfoId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.ShippersContactInfoId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.ShippersContactInfoId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
