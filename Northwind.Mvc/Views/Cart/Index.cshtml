@@ -1,0 +1,70 @@
+@model CartViewModel
+@{
+    ViewData["Title"] = "Cart";
+}
+<section class="plain-section animated-section">
+    <h1 class="animated-text-block">Cart</h1>
+    @if (!Model.Items.Any())
+    {
+        <p>Your cart is empty.</p>
+        <a asp-controller="Menu" asp-action="Index" class="primary-cta">Browse menus</a>
+    }
+    else
+    {
+        <div class="table-shell animated-section">
+            <table>
+                <thead><tr><th>Item</th><th>Pricing</th><th>Customizations</th><th>Guests</th><th>Total</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    var optionTotal = item.Options.Sum(o => o.PriceDelta);
+                    var finalUnitPrice = item.UnitPrice + optionTotal;
+                    <tr>
+                        <td><img class="cart-line-image" src="@MenuImageCatalog.ForItem(item.Name, null, item.ImagePath, item.MenuItemId)" alt="@item.Name" onerror="this.src='/images/menu/meze.jpeg'" /><strong>@item.Name</strong><br /><span>@item.CatererName</span></td>
+                        <td>
+                            <div class="cart-price-breakdown">
+                                <span>Price per person @item.UnitPrice.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</span>
+                                <span>Add-ons per person @optionTotal.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</span>
+                                <strong>Final per person @finalUnitPrice.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</strong>
+                            </div>
+                        </td>
+                        <td>
+                            @if (item.Options.Any())
+                            {
+                                <ul class="cart-option-list">
+                                    @foreach (var option in item.Options)
+                                    {
+                                        <li>@option.Label <span>@(option.PriceDelta == 0 ? "+0" : $"+{option.PriceDelta:C}")</span></li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <span class="muted-text">Standard setup</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="Update" method="post" class="inline-form">
+                                <input name="lineId" value="@item.CartLineId" type="hidden" />
+                                @await Html.PartialAsync("_GuestPriceCalculator", new GuestPriceCalculatorViewModel { PricePerPerson = item.UnitPrice, SelectedAddonsTotal = optionTotal, InitialGuestCount = item.Quantity, InputName = "quantity" })
+                                <button>Update</button>
+                            </form>
+                        </td>
+                        <td><strong>@item.LineTotal.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</strong></td>
+                        <td>
+                            <form asp-action="Remove" method="post">
+                                <input name="lineId" value="@item.CartLineId" type="hidden" />
+                                <button>Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="checkout-bar animated-section">
+            <strong>Total @Model.Total.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</strong>
+            <a asp-controller="Checkout" asp-action="Payment" class="primary-cta">Simulate payment</a>
+        </div>
+    }
+</section>

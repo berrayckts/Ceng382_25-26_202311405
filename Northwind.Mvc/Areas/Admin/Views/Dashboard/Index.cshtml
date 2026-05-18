@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <p class="ce-eyebrow">Admin Panel</p>
+        <h1>Dashboard</h1>
+        <p class="soft-copy mb-0">Review platform health, pending restaurants, and recent order activity.</p>
+    </div>
+    <div class="cta-row">
+        <a class="primary-cta" asp-area="" asp-controller="Admin" asp-action="Caterers" asp-route-approval="pending">Review pending</a>
+        <a class="primary-cta" asp-area="" asp-controller="Admin" asp-action="Index">System monitor</a>
+    </div>
+</div>
+
+<section class="ce-kpi-grid mb-4">
+    <article class="ce-kpi-card"><span>Total orders today</span><strong>@ViewBag.OrdersToday</strong></article>
+    <article class="ce-kpi-card"><span>Total revenue</span><strong>@(((decimal)ViewBag.Revenue).ToString("C"))</strong></article>
+    <article class="ce-kpi-card"><span>Active restaurants</span><strong>@ViewBag.ActiveRestaurants</strong></article>
+    <article class="ce-kpi-card"><span>Pending applications</span><strong>@ViewBag.PendingOwners</strong></article>
+    <article class="ce-kpi-card"><span>Users</span><strong>@ViewBag.Users</strong></article>
+    <article class="ce-kpi-card"><span>Active menu items</span><strong>@ViewBag.MenuItems</strong></article>
+</section>
+
+@if (((IEnumerable<CatererProfile>)ViewBag.PendingRestaurants).Any())
+{
+    <section class="ce-panel mb-4">
+        <h2 class="h5 mb-3">Pending restaurants</h2>
+        <div class="compact-list">
+            @foreach (CatererProfile caterer in ViewBag.PendingRestaurants)
+            {
+                <a asp-area="" asp-controller="Admin" asp-action="Caterers" asp-route-search="@caterer.Name" asp-route-approval="pending">
+                    <span>@caterer.Name</span>
+                    <strong>@(string.IsNullOrWhiteSpace(caterer.District) ? caterer.City : $"{caterer.District}, {caterer.City}")</strong>
+                    <em>Review</em>
+                </a>
+            }
+        </div>
+    </section>
+}
+
+<section class="ce-panel mb-4">
+    <h2 class="h5 mb-3">Recent orders</h2>
+    <div class="table-responsive admin-table-wrap">
+        <table class="admin-data-table">
+            <thead><tr><th>#</th><th>Customer</th><th>Restaurant</th><th>Status</th><th>Total</th></tr></thead>
+            <tbody>
+            @foreach (OrderEntity order in ViewBag.RecentOrders)
+            {
+                <tr>
+                    <td>@order.Id</td>
+                    <td>@order.Customer?.DisplayName</td>
+                    <td>@order.Caterer?.Name</td>
+                    <td><span class="status-pill @(order.Status == OrderStatus.Completed ? "ok" : "muted")">@order.Status</span></td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="ce-panel">
+    <h2 class="h5 mb-3">Quick links</h2>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" asp-area="" asp-controller="Admin" asp-action="Caterers">Manage Restaurants</a>
+        <a class="btn btn-outline-primary" asp-area="" asp-controller="Admin" asp-action="Caterers" asp-route-approval="pending">Pending Restaurants</a>
+        <a class="btn btn-outline-primary" asp-area="" asp-controller="Admin" asp-action="Users">Manage Users</a>
+        <a class="btn btn-outline-primary" asp-area="" asp-controller="Admin" asp-action="LinkRestaurants">Link Nearby Places</a>
+        <a class="btn btn-outline-primary" asp-area="" asp-controller="Admin" asp-action="Logs">View Logs</a>
+    </div>
+</section>

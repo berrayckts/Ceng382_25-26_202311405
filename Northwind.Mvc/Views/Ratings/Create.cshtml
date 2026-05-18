@@ -1,0 +1,73 @@
+@model RatingViewModel
+@{
+    ViewData["Title"] = "Rate Order";
+}
+
+<section class="rating-page animated-section">
+    <div class="rating-hero animated-text-block">
+        <div>
+            <p class="eyebrow">Rating Time</p>
+            <h1>Rate Your Order</h1>
+            <p>Share your experience for <strong>@Model.MenuItemName</strong>@(string.IsNullOrWhiteSpace(Model.CatererName) ? "." : $" by {Model.CatererName}.")</p>
+        </div>
+        <div class="rating-hero-badge" aria-hidden="true">
+            <span>★</span>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" class="rating-form animated-section">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input asp-for="OrderId" type="hidden" />
+        <input asp-for="MenuItemId" type="hidden" />
+        <input asp-for="MenuItemName" type="hidden" />
+        <input asp-for="CatererName" type="hidden" />
+
+        <div class="rating-panels">
+            <fieldset class="rating-panel">
+                <legend>
+                    <span class="rating-icon">🍽</span>
+                    <span>
+                        <strong>Menu Rating</strong>
+                        <small>How was the food package?</small>
+                    </span>
+                </legend>
+                <div class="star-rating" aria-label="Menu rating">
+                    @for (var value = 5; value >= 1; value--)
+                    {
+                        <input asp-for="ItemRating" id="item-rating-@value" type="radio" value="@value" checked="@(Model.ItemRating == value)" />
+                        <label for="item-rating-@value" title="@value stars">★</label>
+                    }
+                </div>
+                <span class="rating-caption">Select a score from 1 to 5.</span>
+            </fieldset>
+
+            <fieldset class="rating-panel">
+                <legend>
+                    <span class="rating-icon">✦</span>
+                    <span>
+                        <strong>Caterer Rating</strong>
+                        <small>How was the restaurant service?</small>
+                    </span>
+                </legend>
+                <div class="star-rating" aria-label="Caterer rating">
+                    @for (var value = 5; value >= 1; value--)
+                    {
+                        <input asp-for="CatererRating" id="caterer-rating-@value" type="radio" value="@value" checked="@(Model.CatererRating == value)" />
+                        <label for="caterer-rating-@value" title="@value stars">★</label>
+                    }
+                </div>
+                <span class="rating-caption">Rate the delivery, timing, and care.</span>
+            </fieldset>
+        </div>
+
+        <label class="rating-comment">
+            <span>Your Comment</span>
+            <textarea asp-for="Comment" placeholder="Write your comment about the menu, taste, delivery, or service..."></textarea>
+        </label>
+
+        <div class="rating-actions">
+            <a asp-controller="Orders" asp-action="Details" asp-route-id="@Model.OrderId" class="secondary-cta">Back to order</a>
+            <button class="primary-cta" type="submit">Submit rating</button>
+        </div>
+    </form>
+</section>

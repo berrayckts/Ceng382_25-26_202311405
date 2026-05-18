@@ -1,0 +1,80 @@
+@model OrderEntity
+@{
+    ViewData["Title"] = $"Order {Model.Id}";
+    var canManageStatus = User.IsInRole(AppRole.Admin)
+        || ((User.IsInRole(AppRole.RestaurantOwner) || User.IsInRole(AppRole.LegacyCaterer))
+            && int.TryParse(User.FindFirst("OwnedRestaurantId")?.Value ?? User.FindFirst("CatererId")?.Value, out var ownedCatererId)
+            && ownedCatererId == Model.CatererId);
+}
+<section class="plain-section">
+    @if (TempData["Warning"] is string warning)
+    {
+        <div class="status-message warning">@warning</div>
+    }
+    @if (TempData["Success"] is string success)
+    {
+        <div class="status-message success">@success</div>
+    }
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">@Model.Status</p>
+            <h1>Order #@Model.Id</h1>
+        </div>
+        <div class="inline-actions">
+            <a asp-action="Receipt" asp-route-id="@Model.Id" class="secondary-cta">Receipt PDF</a>
+            <a asp-action="Agreement" asp-route-id="@Model.Id" class="secondary-cta">Agreement PDF</a>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <div><span>Customer</span><strong>@Model.Customer?.DisplayName</strong></div>
+        <div><span>Caterer</span><strong>@Model.Caterer?.Name</strong></div>
+        <div><span>Total</span><strong>@Model.TotalAmount.ToString("C")</strong></div>
+    </div>
+    @if (canManageStatus)
+    {
+        <div class="form-panel order-status-panel">
+            <div>
+                <p class="eyebrow">Order workflow</p>
+                <h2>Update order status</h2>
+                <p class="soft-copy">Change the customer-facing status as the kitchen prepares and delivers this order.</p>
+            </div>
+            <form asp-action="UpdateStatus" method="post" class="filter-row">
+                <input name="id" value="@Model.Id" type="hidden" />
+                <select name="status" aria-label="Order status">
+                    @foreach (var status in OrderStatus.All)
+                    {
+                        <option value="@status" selected="@(Model.Status == status)">@status</option>
+                    }
+                </select>
+                <button>Update status</button>
+            </form>
+        </div>
+    }
+    <div class="table-shell">
+        <table>
+            <thead><tr><th>Item</th><th>Customizations</th><th>Number of guests</th><th>Price per person</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var line in Model.Lines)
+            {
+                <tr>
+                    <td>@line.MenuItem?.Name</td>
+                    <td>@line.CustomizationSummary</td>
+                    <td>@line.Quantity</td>
+                    <td>@line.UnitPrice.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</td>
+                    <td>@((line.UnitPrice * line.Quantity).ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")))</td>
+                    <td>
+                        @if ((User.IsInRole(AppRole.Customer) || User.IsInRole(AppRole.LegacyUser)) && OrderStatus.CanRate(Model.Status) && !Model.Reviews.Any(r => r.MenuItemId == line.MenuItemId))
+                        {
+                            <a class="rate-link" asp-controller="Ratings" asp-action="Create" asp-route-orderId="@Model.Id" asp-route-menuItemId="@line.MenuItemId">Rate</a>
+                        }
+                        else if (Model.Reviews.Any(r => r.MenuItemId == line.MenuItemId))
+                        {
+                            <span class="rating-done">Rated</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

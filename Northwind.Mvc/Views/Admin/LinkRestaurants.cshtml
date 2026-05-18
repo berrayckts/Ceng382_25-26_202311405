@@ -1,0 +1,145 @@
+@model AdminLinkRestaurantsViewModel
+@{
+    ViewData["Title"] = "Link Restaurants";
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const fallbackLocation = {
+            lat: @Model.DefaultLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            lng: @Model.DefaultLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        };
+        const map = L.map('adminNearbyMap').setView([fallbackLocation.lat, fallbackLocation.lng], 13);
+        const markers = new Map();
+        let selectedCatererId = null;
+        let pendingLocation = null;
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const statusEl = document.getElementById('nearbyStatus');
+        const selectedPanel = document.getElementById('selectedPlacePanel');
+        const selectedName = document.getElementById('selectedPlaceName');
+        const coordinateText = document.getElementById('coordinateText');
+
+        loadLocations();
+
+        async function loadLocations() {
+            const response = await fetch('/Nearby/Locations');
+            if (!response.ok) {
+                statusEl.textContent = 'Could not load caterer locations.';
+                return;
+            }
+            const items = await response.json();
+            items.forEach(item => addOrUpdateMarker(item));
+            if (items.length) {
+                map.fitBounds(L.latLngBounds(items.map(i => [Number(i.latitude), Number(i.longitude)])).pad(0.2));
+            }
+            statusEl.textContent = `${items.length} caterers shown. Select a caterer, then click the map to update coordinates.`;
+        }
+
+        function addOrUpdateMarker(item) {
+            const marker = L.marker([Number(item.latitude), Number(item.longitude)])
+                .addTo(map)
+                .bindPopup(`<strong>${escapeHtml(item.name)}</strong><br>${escapeHtml(item.address || '')}`);
+            markers.set(item.id, marker);
+        }
+
+        document.getElementById('catererList').addEventListener('click', event => {
+            const card = event.target.closest('[data-caterer-id]');
+            if (!card) return;
+            selectedCatererId = Number(card.dataset.catererId);
+            document.querySelectorAll('.caterer-pick').forEach(item => item.classList.remove('active'));
+            card.classList.add('active');
+            selectedPanel.hidden = false;
+            selectedName.textContent = card.dataset.catererName;
+            const marker = markers.get(selectedCatererId);
+            if (marker) {
+                map.setView(marker.getLatLng(), 15);
+                marker.openPopup();
+            }
+        });
+
+        map.on('click', event => {
+            if (!selectedCatererId) {
+                statusEl.textContent = 'Select a caterer from the list before clicking the map.';
+                return;
+            }
+            pendingLocation = event.latlng;
+            coordinateText.textContent = `Selected: ${pendingLocation.lat.toFixed(6)}, ${pendingLocation.lng.toFixed(6)}`;
+        });
+
+        document.getElementById('saveLocation').addEventListener('click', async () => {
+            if (!selectedCatererId || !pendingLocation) {
+                statusEl.textContent = 'Select a caterer and click a point on the map first.';
+                return;
+            }
+
+            const response = await fetch('/Nearby/UpdateCatererLocation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    catererId: selectedCatererId,
+                    latitude: pendingLocation.lat,
+                    longitude: pendingLocation.lng
+                })
+            });
+
+            if (!response.ok) {
+                statusEl.textContent = 'Could not update caterer location.';
+                return;
+            }
+
+            const marker = markers.get(selectedCatererId);
+            marker?.setLatLng(pendingLocation).openPopup();
+            statusEl.textContent = 'Caterer location updated.';
+        });
+
+        document.getElementById('catererSearch').addEventListener('input', event => {
+            const term = event.target.value.toLowerCase();
+            document.querySelectorAll('.caterer-pick').forEach(card => {
+                card.hidden = !card.dataset.name.includes(term);
+            });
+        });
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+    </script>
+}
+
+<section class="nearby-shell admin-link-shell">
+    <div class="nearby-map-panel">
+        <div id="adminNearbyMap" class="nearby-map leaflet-map"></div>
+    </div>
+    <aside class="nearby-list-panel">
+        <div class="nearby-panel-header">
+            <p class="eyebrow">Admin Locations</p>
+            <h1>Manage caterer map locations</h1>
+        </div>
+        <div id="nearbyStatus" class="nearby-status">Loading map...</div>
+        <div id="selectedPlacePanel" class="link-panel" hidden>
+            <h2>Update selected caterer</h2>
+            <p id="selectedPlaceName"></p>
+            <p id="coordinateText">Click the map to choose new coordinates.</p>
+            <button type="button" class="primary-cta" id="saveLocation">Save Location</button>
+        </div>
+        <input id="catererSearch" class="admin-caterer-search" placeholder="Search caterers" />
+        <div id="catererList" class="nearby-results">
+            @foreach (var caterer in Model.Caterers)
+            {
+                <article class="nearby-card caterer-pick" data-caterer-id="@caterer.Id" data-caterer-name="@caterer.Name" data-name="@caterer.Name.ToLowerInvariant()">
+                    <div>
+                        <h2>@caterer.Name</h2>
+                        <p>@caterer.AddressLine</p>
+                        <span>@caterer.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture), @caterer.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)</span>
+                    </div>
+                </article>
+            }
+        </div>
+    </aside>
+</section>

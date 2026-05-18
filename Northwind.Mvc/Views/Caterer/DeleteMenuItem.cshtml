@@ -1,0 +1,32 @@
+@model MenuItemEntity
+@{
+    ViewData["Title"] = "Delete Menu Item";
+}
+
+<section class="plain-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Menu Management</p>
+            <h1>Delete menu item</h1>
+            <p class="soft-copy">Confirm this change for your own restaurant menu.</p>
+        </div>
+        <a asp-action="MenuItems" class="primary-cta">Back to menu</a>
+    </div>
+
+    <div class="delete-confirmation">
+        <div>
+            <h2>@Model.Name</h2>
+            <p>@Model.Description</p>
+            <dl class="compact-details">
+                <div><dt>Category</dt><dd>@Model.Category?.Name</dd></div>
+                <div><dt>Price</dt><dd>@Model.BasePrice.ToString("C")</dd></div>
+                <div><dt>Status</dt><dd>@(Model.IsActive ? "Available" : "Not Available")</dd></div>
+            </dl>
+        </div>
+        <form asp-action="DeleteMenuItem" method="post" class="cta-row">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button class="primary-cta" type="submit">Delete item</button>
+            <a asp-action="MenuItems" class="primary-cta">Cancel</a>
+        </form>
+    </div>
+</section>

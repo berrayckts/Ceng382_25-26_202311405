@@ -1,0 +1,31 @@
+@{
+    var area = (string?)ViewContext.RouteData.Values["area"] ?? "";
+    var isAdmin = string.Equals(area, "Admin", StringComparison.OrdinalIgnoreCase);
+}
+
+<aside class="ce-sidebar">
+    <a class="ce-logo" asp-area="" asp-controller="Home" asp-action="Index">
+        <span class="ce-logo-mark">V</span>
+        <span>@ProjectBranding.Name</span>
+    </a>
+    <nav class="ce-sidebar-nav" aria-label="Workspace navigation">
+        @if (isAdmin)
+        {
+            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" /></svg><span class="ce-sidebar-label">Dashboard</span></a>
+            <a asp-area="" asp-controller="Admin" asp-action="Caterers"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 3h10v18H7V3Zm2 2v14h6V5H9Zm1 2h4v2h-4V7Zm0 4h4v2h-4v-2Z" /></svg><span class="ce-sidebar-label">Restaurants</span></a>
+            <a asp-area="" asp-controller="Admin" asp-action="Users"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8c0-3.3 3.1-6 7-6s7 2.7 7 6H5Z" /></svg><span class="ce-sidebar-label">Users</span></a>
+            <a asp-area="" asp-controller="Admin" asp-action="Logs"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 3h12v18H6V3Zm2 4h8V5H8v2Zm0 4h8V9H8v2Zm0 4h6v-2H8v2Z" /></svg><span class="ce-sidebar-label">Logs</span></a>
+            <a asp-area="" asp-controller="Admin" asp-action="LinkRestaurants"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg><span class="ce-sidebar-label">Locations</span></a>
+        }
+        else
+        {
+            <a asp-area="Owner" asp-controller="Dashboard" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" /></svg><span class="ce-sidebar-label">Dashboard</span></a>
+            <a asp-area="Owner" asp-controller="Menu" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 3h12v18H6V3Zm2 4h8V5H8v2Zm0 4h8V9H8v2Zm0 4h6v-2H8v2Z" /></svg><span class="ce-sidebar-label">Menu</span></a>
+            <a asp-area="Owner" asp-controller="Orders" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 4h10l1 16H6L7 4Zm2 2-.7 12h7.4L15 6H9Zm1 2h4v2h-4V8Z" /></svg><span class="ce-sidebar-label">Orders</span></a>
+            <a asp-area="Owner" asp-controller="Settings" asp-action="Index"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a8 8 0 0 0-2.6-1.5L14 2h-4l-.4 2.5A8 8 0 0 0 7 6L4.6 5l-2 3.5 2 1.5c-.1.5-.1 1-.1 1.5s0 1 .1 1.5l-2 1.5 2 3.5L7 18a8 8 0 0 0 2.6 1.5L10 22h4l.4-2.5A8 8 0 0 0 17 18l2.4 1 2-3.5-2-1.5ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" /></svg><span class="ce-sidebar-label">Settings</span></a>
+        }
+        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 3h8v2H7v14h6v2H5V3Zm10.6 5.4L19.2 12l-3.6 3.6-1.4-1.4 1.2-1.2H10v-2h5.4l-1.2-1.2 1.4-1.4Z" /></svg><span class="ce-sidebar-label">Logout</span></button>
+        </form>
+    </nav>
+</aside>

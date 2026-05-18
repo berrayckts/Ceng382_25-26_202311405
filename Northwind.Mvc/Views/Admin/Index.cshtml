@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Admin";
+}
+<section class="plain-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Admin Dashboard</p>
+            <h1>System monitor</h1>
+            <p class="soft-copy">Operational snapshot for users, restaurants, orders, and platform activity.</p>
+        </div>
+        <div class="cta-row">
+            <a asp-action="LinkRestaurants" class="primary-cta">Map restaurants</a>
+            <a asp-action="Logs" class="primary-cta">View logs</a>
+        </div>
+    </div>
+    <div class="stats-grid">
+        <a asp-action="Users"><span>Users</span><strong>@ViewBag.Users</strong></a>
+        <a asp-action="Caterers"><span>Caterers</span><strong>@ViewBag.Caterers</strong></a>
+        <a asp-action="Caterers" asp-route-approval="pending"><span>Pending restaurants</span><strong>@ViewBag.PendingCaterers</strong></a>
+        <a asp-action="Orders"><span>Open orders</span><strong>@ViewBag.OpenOrders</strong></a>
+        <a asp-controller="Menu" asp-action="Index"><span>Active menus</span><strong>@ViewBag.MenuItems</strong></a>
+        <div><span>Revenue</span><strong>@(((decimal)ViewBag.Revenue).ToString("C"))</strong></div>
+    </div>
+
+    <div class="admin-dashboard-grid">
+        <article class="form-panel">
+            <h2>Recent orders</h2>
+            <div class="compact-list">
+                @foreach (OrderEntity order in ViewBag.RecentOrders)
+                {
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">
+                        <span>#@order.Id · @order.Caterer?.Name</span>
+                        <strong>@order.TotalAmount.ToString("C")</strong>
+                        <em>@order.Status</em>
+                    </a>
+                }
+            </div>
+        </article>
+        <article class="form-panel">
+            <h2>Recent logs</h2>
+            <div class="compact-list">
+                @foreach (SystemLogEntry log in ViewBag.RecentLogs)
+                {
+                    <a asp-action="Logs">
+                        <span>@log.EventName</span>
+                        <strong>@log.Level</strong>
+                        <em>@log.CreatedUtc.ToLocalTime().ToString("g")</em>
+                    </a>
+                }
+            </div>
+        </article>
+    </div>
+</section>

@@ -1,0 +1,22 @@
+@model AvailableDistrictsViewModel
+@{
+    var districts = Model.Districts.Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    var visible = districts.Take(Math.Max(1, Model.MaxVisible)).ToList();
+    var remaining = Math.Max(0, districts.Count - visible.Count);
+}
+@if (districts.Any())
+{
+    <div class="available-districts available-districts--@Model.Variant">
+        <span>Available in</span>
+        <div>
+            @foreach (var district in visible)
+            {
+                <em>@district</em>
+            }
+            @if (remaining > 0)
+            {
+                <em>+@remaining more</em>
+            }
+        </div>
+    </div>
+}

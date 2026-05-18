@@ -1,0 +1,32 @@
+@model PaymentViewModel
+@{
+    ViewData["Title"] = "Payment";
+}
+<section class="auth-shell animated-section">
+    <div class="animated-text-block">
+        <p class="eyebrow">Fake Payment</p>
+        <h1>Simulate payment</h1>
+        <p>No real payment is processed. Order total: <strong>@Model.Cart.Total.ToString("C")</strong></p>
+        <div class="checkout-guest-summary animated-card-grid">
+            @foreach (var item in Model.Cart.Items)
+            {
+                var optionTotal = item.Options.Sum(o => o.PriceDelta);
+                <article>
+                    <strong>@item.Name</strong>
+                    @await Html.PartialAsync("_GuestPriceCalculator", new GuestPriceCalculatorViewModel { PricePerPerson = item.UnitPrice, SelectedAddonsTotal = optionTotal, InitialGuestCount = item.Quantity, ShowInput = false })
+                </article>
+            }
+        </div>
+    </div>
+    <form asp-action="Payment" method="post" class="form-panel animated-section">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <label>Cardholder name <input asp-for="CardholderName" /></label>
+        <label>Card number <input asp-for="CardNumber" placeholder="4242 4242 4242 4242" /></label>
+        <label>Expiry <input asp-for="Expiry" placeholder="12/30" /></label>
+        <label>CVV <input asp-for="Cvv" placeholder="123" /></label>
+        <label>Receipt email <input asp-for="ReceiptEmail" placeholder="name@example.com" /></label>
+        <label>Delivery/event address <input asp-for="DeliveryAddress" /></label>
+        <label>Event notes <textarea asp-for="EventNotes"></textarea></label>
+        <button class="primary-cta" type="submit">Pay demo total @Model.Cart.Total.ToString("C")</button>
+    </form>
+</section>

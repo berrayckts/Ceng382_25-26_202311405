@@ -1,0 +1,47 @@
+@model PagedResult<SystemLogEntry>
+@{
+    ViewData["Title"] = "Logs";
+}
+<section class="plain-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Admin</p>
+            <h1>System logs</h1>
+            <p class="soft-copy">@Model.TotalItems log entries match the current filters.</p>
+        </div>
+        <form method="get" class="filter-row">
+            <input name="search" value="@Model.Search" placeholder="Search logs" />
+            <select name="level">
+                <option value="">All levels</option>
+                <option value="Info" selected="@(ViewBag.Level == "Info")">Info</option>
+                <option value="Error" selected="@(ViewBag.Level == "Error")">Error</option>
+            </select>
+            <button>Filter</button>
+        </form>
+    </div>
+    <div class="admin-log-grid">
+        @foreach (var log in Model.Items)
+        {
+            var isLogin = log.EventName.Equals("Login.Success", StringComparison.OrdinalIgnoreCase);
+            var title = isLogin ? "Login Success" : log.EventName.Replace(".", " ");
+            var actor = string.IsNullOrWhiteSpace(log.ActorEmail) ? "System" : log.ActorEmail;
+            var details = string.IsNullOrWhiteSpace(log.ContextData) ? "No details recorded." : log.ContextData;
+
+            <article class="admin-log-card @(isLogin ? "admin-log-card--login" : "")">
+                <div class="admin-log-icon" aria-hidden="true">L</div>
+                <div class="admin-log-heading">
+                    <h2>@title</h2>
+                    <time>@log.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</time>
+                </div>
+                <dl>
+                    <dt>User</dt>
+                    <dd>@actor</dd>
+                    <dt>Details</dt>
+                    <dd>@details</dd>
+                </dl>
+                <span class="status-pill @(log.Level == "Error" ? "muted" : "ok")">@log.Level</span>
+            </article>
+        }
+    </div>
+    @await Html.PartialAsync("_Pager", Model)
+</section>

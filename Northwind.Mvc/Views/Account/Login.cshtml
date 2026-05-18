@@ -1,0 +1,44 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+}
+<section class="auth-shell login-experience animated-section">
+    <div class="login-showcase animated-text-block">
+        <p class="eyebrow">Welcome Back</p>
+        <h1>Enter @ProjectBranding.Name</h1>
+        <p>Manage refined catering requests, curated menus, and event orders from one polished workspace.</p>
+        <div class="vellora-3d-scene" aria-hidden="true">
+            <div class="vellora-plate">
+                <span class="vellora-dome"></span>
+                <span class="vellora-dome-handle"></span>
+                <span class="vellora-plate-line"></span>
+                <span class="vellora-v-mark">V</span>
+            </div>
+            <div class="vellora-card vellora-card-one">
+                <span>Events</span>
+                <strong>124</strong>
+            </div>
+            <div class="vellora-card vellora-card-two">
+                <span>Menus</span>
+                <strong>Fresh</strong>
+            </div>
+        </div>
+    </div>
+    <form asp-action="Login" method="post" class="form-panel login-panel animated-section">
+        <p class="eyebrow">Secure Access</p>
+        <h2>Sign in</h2>
+        @if (TempData["Success"] is string success)
+        {
+            <div class="status-message success">@success</div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="status-message error">@error</div>
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <label>Email <input asp-for="Email" /></label>
+        <label>Password <input asp-for="Password" /></label>
+        <button class="primary-cta" type="submit">Login</button>
+        <a class="auth-muted-link" asp-action="VerifyEmail" asp-route-email="@Model.Email">Resend verification code</a>
+    </form>
+</section>

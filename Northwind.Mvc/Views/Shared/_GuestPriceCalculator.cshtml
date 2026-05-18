@@ -1,0 +1,31 @@
+@model GuestPriceCalculatorViewModel
+@{
+    var guests = Math.Max(1, Model.InitialGuestCount);
+    var unit = Model.PricePerPerson + Model.SelectedAddonsTotal;
+}
+<div class="guest-price-calculator"
+     data-price-per-person="@Model.PricePerPerson.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+     data-selected-addons="@Model.SelectedAddonsTotal.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+    @if (Model.ShowInput)
+    {
+        <label class="guest-count-field">
+            <span>Number of guests</span>
+            <input class="js-guest-count" name="@Model.InputName" type="number" min="1" step="1" value="@guests" />
+        </label>
+    }
+    else
+    {
+        <div>
+            <span>Number of guests</span>
+            <strong class="js-guest-count-static">@guests</strong>
+        </div>
+    }
+    <div>
+        <span>Price per person</span>
+        <strong class="js-price-per-person">@unit.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR"))</strong>
+    </div>
+    <div>
+        <span>Total</span>
+        <strong class="js-guest-total">@((guests * unit).ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("tr-TR")))</strong>
+    </div>
+</div>

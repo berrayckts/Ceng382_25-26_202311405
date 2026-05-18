@@ -1,0 +1,42 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+<section class="auth-shell animated-section">
+    <div class="animated-text-block">
+        <p class="eyebrow">Join @ProjectBranding.Name</p>
+        <h1>Create an account</h1>
+    </div>
+    <form asp-action="Register" method="post" class="form-panel animated-section">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <label>Full name <input asp-for="FullName" /><span asp-validation-for="FullName" class="text-danger"></span></label>
+        <label>Email <input asp-for="Email" /><span asp-validation-for="Email" class="text-danger"></span></label>
+        <label>Password <input asp-for="Password" /><small>At least 6 characters, with upper/lowercase letters and a number.</small><span asp-validation-for="Password" class="text-danger"></span></label>
+        <label>Role
+            <select asp-for="Role">
+                <option value="@AppRole.Customer">Customer</option>
+                <option value="@AppRole.RestaurantOwner">Restaurant Owner</option>
+            </select>
+            <span asp-validation-for="Role" class="text-danger"></span>
+        </label>
+        <label class="restaurant-name-field">Restaurant name <input asp-for="CatererName" /><span asp-validation-for="CatererName" class="text-danger"></span></label>
+        <label>City <input asp-for="City" /><span asp-validation-for="City" class="text-danger"></span></label>
+        <button class="primary-cta" type="submit">Register</button>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const role = document.querySelector('[name="Role"]');
+            const restaurantField = document.querySelector('.restaurant-name-field');
+            function updateRestaurantField() {
+                if (!role || !restaurantField) return;
+                restaurantField.style.display = role.value === '@AppRole.RestaurantOwner' ? 'grid' : 'none';
+            }
+            role?.addEventListener('change', updateRestaurantField);
+            updateRestaurantField();
+        })();
+    </script>
+}

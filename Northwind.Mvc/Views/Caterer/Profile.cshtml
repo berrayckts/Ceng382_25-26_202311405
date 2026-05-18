@@ -1,0 +1,180 @@
+@model CatererProfileFormViewModel
+@{
+    ViewData["Title"] = "Restaurant Profile";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
+<section class="plain-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Caterer Profile</p>
+            <h1>My Restaurant</h1>
+            <p class="soft-copy">Customers use this profile and location to discover your catering service nearby.</p>
+        </div>
+        <a asp-action="Index" class="primary-cta">Dashboard</a>
+    </div>
+
+    <form asp-action="Profile" method="post" class="profile-form-grid">
+        <div class="form-panel">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input asp-for="Id" type="hidden" />
+
+            <label>Restaurant name <input asp-for="Name" /><span asp-validation-for="Name" class="text-danger"></span></label>
+            <label>Brand story <textarea asp-for="BrandStory"></textarea><span asp-validation-for="BrandStory" class="text-danger"></span></label>
+            <label>Address <input asp-for="AddressLine" id="AddressLine" /><span asp-validation-for="AddressLine" class="text-danger"></span></label>
+            <div class="two-column-form">
+                <label>City <input asp-for="City" id="City" /><span asp-validation-for="City" class="text-danger"></span></label>
+                <label>District <input asp-for="District" id="District" /><span asp-validation-for="District" class="text-danger"></span></label>
+            </div>
+            <div class="two-column-form">
+                <label>Email <input asp-for="Email" /><span asp-validation-for="Email" class="text-danger"></span></label>
+                <label>Phone <input asp-for="Phone" /><span asp-validation-for="Phone" class="text-danger"></span></label>
+            </div>
+            <div class="two-column-form">
+                <label>Latitude <input asp-for="Latitude" id="Latitude" type="number" step="0.000001" /><span asp-validation-for="Latitude" class="text-danger"></span></label>
+                <label>Longitude <input asp-for="Longitude" id="Longitude" type="number" step="0.000001" /><span asp-validation-for="Longitude" class="text-danger"></span></label>
+            </div>
+            <button class="primary-cta" type="submit">Save restaurant profile</button>
+        </div>
+
+        <aside class="map-picker-panel">
+            <h2>Location Picker</h2>
+            <p>Search an address, use your current location, or click the map to move your restaurant marker.</p>
+            <div class="profile-map-tools">
+                <input id="profileLocationSearch" type="search" placeholder="Search city, district, or address" autocomplete="off" />
+                <button id="profileLocationSearchButton" type="button" class="secondary-cta">Search</button>
+                <button id="profileUseCurrentLocation" type="button" class="secondary-cta">Use my location</button>
+            </div>
+            <p id="profileMapStatus" class="profile-map-status" aria-live="polite"></p>
+            <div id="profileMap" class="profile-map"></div>
+        </aside>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const latInput = document.getElementById('Latitude');
+        const lngInput = document.getElementById('Longitude');
+        const cityInput = document.getElementById('City');
+        const districtInput = document.getElementById('District');
+        const addressInput = document.getElementById('AddressLine');
+        const searchInput = document.getElementById('profileLocationSearch');
+        const searchButton = document.getElementById('profileLocationSearchButton');
+        const currentLocationButton = document.getElementById('profileUseCurrentLocation');
+        const statusText = document.getElementById('profileMapStatus');
+
+        function readCoordinate(input, fallback) {
+            const value = (input?.value || '').replace(',', '.');
+            const coordinate = Number.parseFloat(value);
+            return Number.isFinite(coordinate) ? coordinate : fallback;
+        }
+
+        const initialLat = readCoordinate(latInput, 41.0082);
+        const initialLng = readCoordinate(lngInput, 28.9784);
+
+        if (!window.L) {
+            statusText.textContent = 'Map could not be loaded. Please check your internet connection.';
+        } else {
+            const map = L.map('profileMap').setView([initialLat, initialLng], 13);
+            let marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            function setStatus(message) {
+                statusText.textContent = message || '';
+            }
+
+            function setPosition(lat, lng, shouldReverseLookup = true) {
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], Math.max(map.getZoom(), 14));
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
+                setStatus('Location selected. Save the profile to keep this restaurant location.');
+
+                if (shouldReverseLookup) {
+                    reverseLookup(lat, lng);
+                }
+            }
+
+            async function reverseLookup(lat, lng) {
+                try {
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=en`;
+                    const response = await fetch(url);
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    const address = data.address || {};
+                    cityInput.value = address.city || address.town || address.province || address.state || cityInput.value;
+                    districtInput.value = address.suburb || address.town || address.county || address.city_district || districtInput.value;
+                    addressInput.value = data.display_name || addressInput.value;
+                } catch {
+                    setStatus('Location selected, but address details could not be updated automatically.');
+                }
+            }
+
+            async function searchLocation() {
+                const query = searchInput.value.trim();
+                if (!query) {
+                    setStatus('Type an address, city, or district first.');
+                    return;
+                }
+
+                setStatus('Searching location...');
+                try {
+                    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
+                    const response = await fetch(url);
+                    const results = response.ok ? await response.json() : [];
+                    if (!results.length) {
+                        setStatus('No location found for this search.');
+                        return;
+                    }
+
+                    const result = results[0];
+                    setPosition(Number.parseFloat(result.lat), Number.parseFloat(result.lon), true);
+                } catch {
+                    setStatus('Location search failed. You can still click the map manually.');
+                }
+            }
+
+            map.on('click', event => {
+                setPosition(event.latlng.lat, event.latlng.lng);
+            });
+
+            marker.on('dragend', event => {
+                const point = event.target.getLatLng();
+                setPosition(point.lat, point.lng);
+            });
+
+            searchButton.addEventListener('click', searchLocation);
+            searchInput.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    searchLocation();
+                }
+            });
+
+            currentLocationButton.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    setStatus('Your browser does not support current location.');
+                    return;
+                }
+
+                setStatus('Getting your current location...');
+                navigator.geolocation.getCurrentPosition(
+                    position => setPosition(position.coords.latitude, position.coords.longitude),
+                    () => setStatus('Current location permission was denied or unavailable.'),
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+
+            setTimeout(() => map.invalidateSize(), 150);
+        }
+    </script>
+}

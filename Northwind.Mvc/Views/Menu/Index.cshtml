@@ -1,0 +1,160 @@
+@model MenuIndexViewModel
+@{
+    ViewData["Title"] = "Menus";
+    var catererRatings = ViewBag.CatererRatings as IDictionary<int, string> ?? new Dictionary<int, string>();
+    var latRoute = Model.UserLatitude?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    var lngRoute = Model.UserLongitude?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}
+<section class="plain-section animated-section">
+    @if (TempData["Success"] is string success)
+    {
+        <div class="status-message success">@success</div>
+    }
+    <div class="section-heading animated-text-block">
+        <div>
+            <p class="eyebrow">Nearby Catering</p>
+            <h1>@(Model.SelectedCaterer is not null ? Model.SelectedCaterer.Name : Model.HasLocationFilter ? $"Restaurants within {Model.RadiusKm:0} km" : "Restaurants nearest to Istanbul")</h1>
+            <p class="soft-copy" id="locationStatus">@(Model.HasLocationFilter ? "Restaurants are sorted from nearest to farthest from your location." : "Restaurants are sorted from nearest to farthest from the Istanbul demo center. Use your location for live distance sorting.")</p>
+        </div>
+        <form method="get" class="filter-row animated-section" id="menuFilterForm">
+            <input name="search" value="@Model.MenuItems.Search" placeholder="Search menu, caterer, cuisine" />
+            <select name="city">
+                <option value="">All cities</option>
+                @foreach (var city in Model.CityOptions)
+                {
+                    <option value="@city" selected="@(Model.City == city)">@city</option>
+                }
+            </select>
+            <select name="radiusKm" id="radiusKm">
+                @foreach (var radius in new[] { 5, 10, 25, 50, 100 })
+                {
+                    <option value="@radius" selected="@(Math.Abs(Model.RadiusKm - radius) < 0.01)">@radius km</option>
+                }
+            </select>
+            <select name="district">
+                <option value="">All districts</option>
+                @foreach (var district in Model.DistrictOptions)
+                {
+                    <option value="@district" selected="@(Model.District == district)">@district</option>
+                }
+            </select>
+            <input type="hidden" name="lat" id="lat" value="@latRoute" />
+            <input type="hidden" name="lng" id="lng" value="@lngRoute" />
+            @if (Model.SelectedCaterer is not null)
+            {
+                <input type="hidden" name="catererId" value="@Model.SelectedCaterer.Id" />
+            }
+            <button type="submit">Filter</button>
+            <button type="button" id="useLocationButton">Use my location</button>
+            @if (Model.HasLocationFilter || Model.SelectedCaterer is not null)
+            {
+                <a asp-action="Index" asp-route-search="@Model.MenuItems.Search" class="primary-cta">Show all</a>
+            }
+        </form>
+    </div>
+
+    @if (Model.SelectedCaterer is null)
+    {
+        <div class="restaurant-distance-grid animated-card-grid">
+            @foreach (var caterer in Model.Caterers)
+            {
+                var catererRating = catererRatings.TryGetValue(caterer.Id, out var rating) ? rating : "New";
+                <a class="restaurant-distance-card"
+                   asp-action="Index"
+                   asp-route-catererId="@caterer.Id"
+                   asp-route-search="@Model.Search"
+                   asp-route-city="@Model.City"
+                   asp-route-district="@Model.District"
+                   asp-route-radiusKm="@Model.RadiusKm"
+                   asp-route-lat="@latRoute"
+                   asp-route-lng="@lngRoute">
+                    <img src="@MenuImageCatalog.ForCaterer(caterer.Name, caterer.Category, caterer.ImagePath, caterer.Id)" alt="@caterer.Name" onerror="this.src='/images/menu/kanepe.jpeg'" />
+                    <div>
+                        <h2>@caterer.Name</h2>
+                        <p>@(caterer.District ?? caterer.City) · @caterer.Category</p>
+                        <span>★ @catererRating caterer rating</span>
+                        <span>@caterer.DistanceKm.ToString("0.0") km away</span>
+                        @await Html.PartialAsync("_AvailableDistricts", new AvailableDistrictsViewModel { Districts = caterer.AvailableDistricts, MaxVisible = 3, Variant = "inline" })
+                    </div>
+                    <strong>@(caterer.ActiveMenuCount > 0 ? $"From {caterer.MinimumPrice.ToString("C")}" : "No menu available")</strong>
+                    <em>@caterer.ActiveMenuCount menu items</em>
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="selected-restaurant-strip animated-section">
+            <div>
+                <span>@Model.SelectedCaterer.DistanceKm.ToString("0.0") km away</span>
+                <span>★ @(catererRatings.TryGetValue(Model.SelectedCaterer.Id, out var selectedRating) ? selectedRating : "New") caterer rating</span>
+                <strong>@(Model.SelectedCaterer.ActiveMenuCount > 0 ? $"{Model.SelectedCaterer.ActiveMenuCount} available menu items" : "No menu available")</strong>
+                @await Html.PartialAsync("_AvailableDistricts", new AvailableDistrictsViewModel { Districts = Model.SelectedCaterer.AvailableDistricts, MaxVisible = 4, Variant = "inline" })
+            </div>
+            <a asp-action="Index"
+               asp-route-search="@Model.Search"
+               asp-route-city="@Model.City"
+               asp-route-district="@Model.District"
+               asp-route-radiusKm="@Model.RadiusKm"
+               asp-route-lat="@latRoute"
+               asp-route-lng="@lngRoute">Back to restaurants</a>
+        </div>
+    }
+
+    <div class="menu-card-grid animated-card-grid">
+        @foreach (var item in Model.MenuItems.Items)
+        {
+            var itemRating = item.Reviews.Any() ? item.Reviews.Average(r => r.ItemRating).ToString("0.0") : "New";
+            var catererRating = catererRatings.TryGetValue(item.CatererId, out var rating) ? rating : "New";
+            <article class="menu-card">
+                <img class="menu-image" src="@MenuImageCatalog.ForItem(item.Name, item.Category?.Name, item.ImagePath, item.Id)" alt="@item.Name" onerror="this.src='/images/menu/meze.jpeg'" />
+                <h2>@item.Name</h2>
+                <p>@item.Description</p>
+                <div class="meta-grid">
+                    <span>@item.Caterer?.Name</span>
+                    <span>Item @itemRating</span>
+                    <span>Caterer @catererRating</span>
+                </div>
+                @if (item.Caterer is not null)
+                {
+                    @await Html.PartialAsync("_AvailableDistricts", new AvailableDistrictsViewModel { Districts = AvailableDistrictCatalog.For(item.Caterer), MaxVisible = 3, Variant = "inline" })
+                }
+                <div class="menu-card-footer">
+                    <strong>@item.BasePrice.ToString("C")</strong>
+                    <a asp-action="Details" asp-route-id="@item.Id">Customize</a>
+                </div>
+            </article>
+        }
+        @if (!Model.MenuItems.Items.Any())
+        {
+            <p class="empty-note">@(string.IsNullOrWhiteSpace(Model.District) ? "No available menus found for this filter." : "No caterers are currently available in this district.")</p>
+        }
+    </div>
+    @await Html.PartialAsync("_Pager", Model.MenuItems)
+</section>
+
+@section Scripts {
+    <script>
+        const locationButton = document.getElementById('useLocationButton');
+        const statusText = document.getElementById('locationStatus');
+        const form = document.getElementById('menuFilterForm');
+        const latInput = document.getElementById('lat');
+        const lngInput = document.getElementById('lng');
+
+        locationButton?.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                statusText.textContent = 'Your browser does not support location. Showing all available menus.';
+                return;
+            }
+
+            statusText.textContent = 'Finding your location...';
+            navigator.geolocation.getCurrentPosition(position => {
+                latInput.value = position.coords.latitude.toFixed(6);
+                lngInput.value = position.coords.longitude.toFixed(6);
+                form.submit();
+            }, () => {
+                statusText.textContent = 'Location permission was not granted. Showing all available menus.';
+            });
+        });
+    </script>
+}

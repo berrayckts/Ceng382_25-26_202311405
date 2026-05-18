@@ -1,6 +1,46 @@
-﻿@{
-    ViewData["Title"] = "Privacy Policy";
+@{
+    ViewData["Title"] = "Week 1 Roadmap";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<section class="info-sheet">
+    <p class="eyebrow">Roadmap</p>
+    <h1>Week 1 implementation notes</h1>
+    <p>
+        The roadmap PDF asks us to begin the project from scratch with a new branch, a fresh MVC project direction,
+        a relational database plan, a branded identity, and a starter UI including navbar, left sidebar, footer, and base styling.
+    </p>
+
+    <div class="info-grid">
+        <article>
+            <h2>What is done</h2>
+            <ul>
+                <li><code>project</code> branch created for the project phase.</li>
+                <li>Brand selected: <strong>Mira Feast</strong>.</li>
+                <li>Starter storefront UI prepared with premium catering direction.</li>
+                <li>Code-first schema added with core entities for menu, orders, reviews, and logs.</li>
+                <li>Project connection string registered for the new application database.</li>
+            </ul>
+        </article>
+
+        <article>
+            <h2>Week 1 schema scope</h2>
+            <ul>
+                <li><code>CatererProfile</code> and <code>CustomerProfile</code></li>
+                <li><code>CuisineCategory</code> and <code>MenuItemEntity</code></li>
+                <li><code>MenuItemOptionGroup</code> and <code>MenuItemOption</code></li>
+                <li><code>OrderEntity</code>, <code>OrderLineEntity</code>, <code>OrderLineOptionEntity</code></li>
+                <li><code>MenuItemReview</code> and <code>SystemLogEntry</code></li>
+            </ul>
+        </article>
+    </div>
+
+    <article class="references-box">
+        <h2>References</h2>
+        <ul>
+            <li><code>Ceng 382 Web Project.pdf</code> for full project requirements and grading rubric.</li>
+            <li><code>Ceng 382 Web Project (1).pdf</code> for the Week 1 roadmap.</li>
+            <li>User-provided sample theme image for visual direction only; implementation remains original.</li>
+            <li>Microsoft ASP.NET Core MVC and Entity Framework Core structure already present in this repository.</li>
+        </ul>
+    </article>
+</section>

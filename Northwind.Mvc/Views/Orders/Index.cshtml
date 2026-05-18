@@ -1,0 +1,50 @@
+@model PagedResult<OrderEntity>
+@{
+    ViewData["Title"] = "Orders";
+}
+<section class="plain-section animated-section">
+    <div class="section-heading animated-text-block">
+        <h1>Orders</h1>
+        <form method="get" class="filter-row animated-section">
+            <input name="search" value="@Model.Search" placeholder="Search orders" />
+            <select name="status">
+                <option value="">All status</option>
+                @foreach (var status in OrderStatus.All)
+                {
+                    <option value="@status" selected="@(ViewBag.Status == status)">@status</option>
+                }
+            </select>
+            <button>Filter</button>
+        </form>
+    </div>
+    <div class="table-shell animated-section">
+        <table>
+            <thead><tr><th>#</th><th>Customer</th><th>Caterer</th><th>Status</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var order in Model.Items)
+            {
+                var nextRateLine = OrderStatus.CanRate(order.Status)
+                    ? order.Lines.FirstOrDefault(line => !order.Reviews.Any(review => review.MenuItemId == line.MenuItemId))
+                    : null;
+                <tr>
+                    <td>@order.Id</td>
+                    <td>@order.Customer?.DisplayName</td>
+                    <td>@order.Caterer?.Name</td>
+                    <td>@order.Status</td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>
+                        <div class="inline-actions">
+                            <a asp-action="Details" asp-route-id="@order.Id">Open</a>
+                            @if ((User.IsInRole(AppRole.Customer) || User.IsInRole(AppRole.LegacyUser)) && nextRateLine is not null)
+                            {
+                                <a class="rate-link" asp-controller="Ratings" asp-action="Create" asp-route-orderId="@order.Id" asp-route-menuItemId="@nextRateLine.MenuItemId">Rate</a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+    @await Html.PartialAsync("_Pager", Model)
+</section>

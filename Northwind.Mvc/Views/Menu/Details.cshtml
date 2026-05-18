@@ -1,0 +1,192 @@
+@model MenuItemEntity
+@{
+    ViewData["Title"] = Model.Name;
+    var itemRating = Model.Reviews.Any() ? Model.Reviews.Average(r => r.ItemRating).ToString("0.0") : "New";
+    var catererReviews = Model.Caterer?.Orders.SelectMany(o => o.Reviews).ToList() ?? [];
+    var catererRating = catererReviews.Any() ? catererReviews.Average(r => r.CatererRating).ToString("0.0") : "New";
+}
+<section class="detail-shell animated-section">
+    <img class="detail-image animated-image" src="@MenuImageCatalog.ForItem(Model.Name, Model.Category?.Name, Model.ImagePath, Model.Id)" alt="@Model.Name" />
+    <div class="detail-copy animated-text-block">
+        @if (TempData["Error"] is string error)
+        {
+            <div class="status-message error">@error</div>
+        }
+        <p class="eyebrow">@Model.Caterer?.Name</p>
+        <h1>@Model.Name</h1>
+        <p>@Model.Description</p>
+        <div class="meta-grid">
+            <span>@Model.Category?.Name</span>
+            <span>Item rating @itemRating</span>
+            <span>Caterer rating @catererRating</span>
+        </div>
+        @if (Model.Caterer is not null)
+        {
+            @await Html.PartialAsync("_AvailableDistricts", new AvailableDistrictsViewModel { Districts = AvailableDistrictCatalog.For(Model.Caterer), MaxVisible = 4, Variant = "chips" })
+        }
+        <form asp-controller="Cart" asp-action="Add" method="post" class="form-panel menu-customizer animated-section" data-base-price="@Model.BasePrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+            <input name="MenuItemId" value="@Model.Id" type="hidden" />
+            @await Html.PartialAsync("_GuestPriceCalculator", new GuestPriceCalculatorViewModel { PricePerPerson = Model.BasePrice, InitialGuestCount = 1, InputName = "Quantity" })
+            @foreach (var group in Model.OptionGroups.OrderBy(g => OptionSort(g.Title)).ThenBy(g => g.Title))
+            {
+                var availableOptions = group.Options.Where(o => o.IsAvailable).OrderBy(o => o.Title).ToList();
+                if (!availableOptions.Any())
+                {
+                    continue;
+                }
+
+                if (IsIncludedGroup(group))
+                {
+                    <fieldset class="option-choice-group option-choice-group--included animated-section">
+                        <legend>
+                            <span>Included Menu Items</span>
+                            <small>Included</small>
+                        </legend>
+                        <div class="included-option-list">
+                            @foreach (var option in availableOptions)
+                            {
+                                <span>@option.Title@if (!string.IsNullOrWhiteSpace(option.QuantityInfo)){<small>@option.QuantityInfo</small>}</span>
+                            }
+                        </div>
+                    </fieldset>
+                    continue;
+                }
+
+                <fieldset class="option-choice-group animated-section" data-min="@group.MinSelection" data-max="@group.MaxSelection">
+                    <legend>
+                        <span>@group.Title</span>
+                        @if (group.IsRequired)
+                        {
+                            <small>Required</small>
+                        }
+                        else
+                        {
+                            <small>Optional</small>
+                        }
+                    </legend>
+                    <p class="option-hint">
+                        @(group.AllowsMultipleSelections ? $"Choose up to {group.MaxSelection}" : group.Title.Contains("Drink", StringComparison.OrdinalIgnoreCase) ? "Choose one drink" : "Choose one")
+                    </p>
+                    @foreach (var option in availableOptions)
+                    {
+                        <label class="check-row">
+                            <input name="SelectedOptionIds"
+                                   value="@option.Id"
+                                   type="checkbox"
+                                   data-single="@(!group.AllowsMultipleSelections)"
+                                   data-group-id="@group.Id"
+                                   data-price-delta="@option.PriceDelta.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   checked="@option.IsDefault" />
+                            <span>@option.Title@if (!string.IsNullOrWhiteSpace(option.QuantityInfo)){<small>@option.QuantityInfo</small>}</span>
+                            <strong>@(option.PriceDelta == 0 ? "+0" : option.PriceDelta > 0 ? $"+{option.PriceDelta:C}" : option.PriceDelta.ToString("C"))</strong>
+                        </label>
+                    }
+                </fieldset>
+            }
+            <div class="customizer-total">
+                <span>Price per person with selections</span>
+                <strong class="js-unit-total">@Model.BasePrice.ToString("C")</strong>
+            </div>
+            <button class="primary-cta js-add-cart-label" type="submit">Add to cart - @Model.BasePrice.ToString("C")</button>
+        </form>
+    </div>
+</section>
+
+<section class="plain-section review-section animated-section">
+    <div class="section-heading animated-text-block">
+        <div>
+            <p class="eyebrow">Customer Reviews</p>
+            <h1>Reviews for @Model.Name</h1>
+            <p class="soft-copy">Ratings and comments from completed Vellora orders.</p>
+        </div>
+        <div class="review-summary">
+            <span>★</span>
+            <strong>@itemRating</strong>
+        </div>
+    </div>
+
+    @if (Model.Reviews.Any())
+    {
+        <div class="review-grid animated-card-grid">
+            @foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedUtc).Take(6))
+            {
+                <article class="review-card">
+                    <div>
+                        <strong>@(review.Order?.Customer?.DisplayName ?? "Customer")</strong>
+                        <span>@review.CreatedUtc.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                    </div>
+                    <div class="review-stars" aria-label="@review.ItemRating out of 5 stars">
+                        @for (var value = 1; value <= 5; value++)
+                        {
+                            <span class="@(value <= review.ItemRating ? "is-filled" : "")">★</span>
+                        }
+                    </div>
+                    <p>@(string.IsNullOrWhiteSpace(review.Comment) ? "No written comment was added." : review.Comment)</p>
+                    <small>Caterer service: @review.CatererRating/5</small>
+                </article>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="review-empty">
+            <span>★</span>
+            <h2>No reviews yet</h2>
+            <p>There are no reviews for this menu yet.</p>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.querySelector('.menu-customizer');
+            if (!form) return;
+            const basePrice = Number(form.dataset.basePrice || 0);
+            const quantityInput = form.querySelector('.js-guest-count');
+            const unitTotal = form.querySelector('.js-unit-total');
+            const submit = form.querySelector('.js-add-cart-label');
+            const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+
+            function selectedOptionsTotal() {
+                return [...form.querySelectorAll('input[name="SelectedOptionIds"]:checked')]
+                    .reduce((sum, input) => sum + Number(input.dataset.priceDelta || 0), 0);
+            }
+
+            function updateTotals() {
+                const unit = basePrice + selectedOptionsTotal();
+                const quantity = Math.max(1, Number(quantityInput?.value || 1));
+                unitTotal.textContent = formatter.format(unit);
+                submit.textContent = `Add to cart - ${formatter.format(unit * quantity)}`;
+            }
+
+            form.addEventListener('change', event => {
+                const input = event.target.closest('input[name="SelectedOptionIds"]');
+                if (input?.checked && input.dataset.single === 'True') {
+                    form.querySelectorAll(`input[name="SelectedOptionIds"][data-group-id="${input.dataset.groupId}"]`)
+                        .forEach(other => {
+                            if (other !== input) other.checked = false;
+                        });
+                }
+                updateTotals();
+            });
+            form.addEventListener('input', updateTotals);
+            updateTotals();
+        })();
+    </script>
+}
+
+@functions {
+    private static int OptionSort(string title) => title switch
+    {
+        "Included Menu Items" => 0,
+        "Removable Items" or "Remove Ingredients" or "Removable Ingredients" => 1,
+        "Add-on / Extra Items" or "Extras" or "Optional Extras" => 2,
+        "Drink Choices" or "Drink Choice" => 3,
+        _ => 4
+    };
+
+    private static bool IsIncludedGroup(MenuItemOptionGroup group) =>
+        group.Title.Equals("Included Menu Items", StringComparison.OrdinalIgnoreCase)
+        || group.Options.Any(o => o.OptionType == MenuItemOptionType.Included);
+}

@@ -1,0 +1,40 @@
+@model PagedResult<AppUser>
+@{
+    ViewData["Title"] = "Users";
+}
+<section class="plain-section">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Admin</p>
+            <h1>Users</h1>
+            <p class="soft-copy">@Model.TotalItems accounts match the current filters.</p>
+        </div>
+        <form method="get" class="filter-row">
+            <input name="search" value="@Model.Search" placeholder="Search users" />
+            <select name="role">
+                <option value="">All roles</option>
+                @foreach (var role in AppRole.All)
+                {
+                    <option value="@role" selected="@(ViewBag.Role == role)">@role</option>
+                }
+            </select>
+            <button>Filter</button>
+        </form>
+    </div>
+    <div class="table-shell">
+        <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Profile</th><th>Status</th><th></th></tr></thead><tbody>
+        @foreach (var user in Model.Items)
+        {
+            <tr>
+                <td><strong>@user.FullName</strong></td>
+                <td>@user.Email</td>
+                <td><span class="status-pill muted">@user.Role</span></td>
+                <td>@(user.CatererProfile?.Name ?? user.CustomerProfile?.DisplayName ?? "-")</td>
+                <td><span class="status-pill @(user.IsActive ? "ok" : "muted")">@(user.IsActive ? "Active" : "Blocked")</span></td>
+                <td><form asp-action="ToggleUser" method="post" class="inline-form"><input name="id" value="@user.Id" type="hidden" /><button>@(user.IsActive ? "Block" : "Activate")</button></form></td>
+            </tr>
+        }
+        </tbody></table>
+    </div>
+    @await Html.PartialAsync("_Pager", Model)
+</section>

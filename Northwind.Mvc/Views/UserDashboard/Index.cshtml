@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "User Dashboard";
+    var customer = (CustomerProfile)ViewBag.Customer;
+}
+<section class="plain-section">
+    <p class="eyebrow">User Dashboard</p>
+    <h1>Hello, @customer.DisplayName</h1>
+    <div class="stats-grid">
+        <div><span>Total spending</span><strong>@(((decimal)ViewBag.TotalSpending).ToString("C"))</strong></div>
+        <div><span>Orders</span><strong>@ViewBag.OrderCount</strong></div>
+        <a asp-controller="Menu" asp-action="Index"><span>Nearby</span><strong>Browse menus</strong></a>
+    </div>
+    <div class="feature-grid">
+        <section>
+            <h2>Nearby caterers</h2>
+            <div class="menu-card-grid compact">
+                @foreach (CatererProfile caterer in ViewBag.NearbyCaterers)
+                {
+                    <article class="menu-card"><h3>@caterer.Name</h3><p>@caterer.BrandStory</p><strong>@caterer.MenuItems.Count menu items</strong></article>
+                }
+            </div>
+        </section>
+        <section>
+            <h2>Recent orders</h2>
+            <div class="log-list">
+                @foreach (OrderEntity order in ViewBag.RecentOrders)
+                {
+                    <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">#@order.Id - @order.Caterer?.Name - @order.Status - @order.TotalAmount.ToString("C")</a>
+                }
+            </div>
+        </section>
+    </div>
+</section>

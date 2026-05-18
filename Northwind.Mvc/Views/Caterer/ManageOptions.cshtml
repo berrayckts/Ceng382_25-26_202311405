@@ -1,0 +1,157 @@
+@model MenuItemEntity
+@{
+    ViewData["Title"] = "Menu options";
+}
+
+<section class="plain-section">
+    @if (TempData["Success"] is string success)
+    {
+        <div class="status-message success">@success</div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="status-message error">@error</div>
+    }
+
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Caterer options</p>
+            <h1>@Model.Name</h1>
+            <p>@Model.Category?.Name · Base @Model.BasePrice.ToString("C")</p>
+        </div>
+        <div class="cta-row">
+            <a asp-action="MenuItems" class="primary-cta">Back to menu</a>
+            <a asp-action="EditMenuItem" asp-route-id="@Model.Id" class="primary-cta">Edit item</a>
+        </div>
+    </div>
+
+    <div class="option-admin-grid">
+        <article class="form-panel">
+            <h2>Menu Builder</h2>
+            <p class="soft-copy">Add package content, removable items, paid extras, and drink choices without changing the menu base price.</p>
+            @foreach (var builderSection in new[]
+            {
+                new { Type = "included", Title = "Included Menu Items", Hint = "Already inside the package. Price is kept at 0.", Placeholder = "Adana kebap", Quantity = "1 portion", Price = false },
+                new { Type = "removable", Title = "Removable Items", Hint = "Customer can remove these. Negative price is supported.", Placeholder = "No onion", Quantity = "optional", Price = true },
+                new { Type = "extra", Title = "Add-on / Extra Items", Hint = "Paid additions shown as checkboxes.", Placeholder = "Extra kofte", Quantity = "1 piece", Price = true },
+                new { Type = "drink", Title = "Drink Choices", Hint = "Single drink choices with optional extra price.", Placeholder = "Ayran", Quantity = "330 ml", Price = true }
+            })
+            {
+                <form asp-action="AddMenuBuilderOption" method="post" class="builder-quick-form">
+                    <input type="hidden" name="menuItemId" value="@Model.Id" />
+                    <input type="hidden" name="optionType" value="@builderSection.Type" />
+                    <div>
+                        <strong>@builderSection.Title</strong>
+                        <span>@builderSection.Hint</span>
+                    </div>
+                    <input name="title" maxlength="80" required placeholder="@builderSection.Placeholder" />
+                    <input name="quantityInfo" maxlength="80" placeholder="@builderSection.Quantity" />
+                    @if (builderSection.Price)
+                    {
+                        <input name="priceDelta" type="number" min="-100000" step="0.01" value="0" aria-label="Price impact" />
+                    }
+                    <button type="submit">Add</button>
+                </form>
+            }
+        </article>
+
+        <div class="options-list">
+            @foreach (var group in Model.OptionGroups.OrderBy(g => OptionSort(g.Title)).ThenBy(g => g.Title))
+            {
+                <article class="form-panel option-group-card">
+                    <form asp-action="EditOptionGroup" method="post" class="stacked-form compact-form">
+                        <input type="hidden" name="MenuItemId" value="@Model.Id" />
+                        <input type="hidden" name="GroupId" value="@group.Id" />
+                        <div class="form-grid group-edit-grid">
+                            <label>Name <input name="Title" value="@group.Title" maxlength="80" required /></label>
+                            <label>Min <input name="MinSelection" type="number" min="0" max="20" value="@group.MinSelection" /></label>
+                            <label>Max <input name="MaxSelection" type="number" min="0" max="20" value="@group.MaxSelection" /></label>
+                        </div>
+                        <div class="option-flags">
+                            <label class="check-row"><input name="AllowsMultipleSelections" type="checkbox" value="true" checked="@group.AllowsMultipleSelections" /><input name="AllowsMultipleSelections" type="hidden" value="false" /> Multiple</label>
+                            <label class="check-row"><input name="IsRequired" type="checkbox" value="true" checked="@group.IsRequired" /><input name="IsRequired" type="hidden" value="false" /> Required</label>
+                            <button type="submit">Save group</button>
+                        </div>
+                    </form>
+
+                    <div class="option-rows">
+                        @foreach (var option in group.Options)
+                        {
+                            <form asp-action="EditOption" method="post" class="option-row-editor">
+                                <input type="hidden" name="MenuItemId" value="@Model.Id" />
+                                <input type="hidden" name="GroupId" value="@group.Id" />
+                                <input type="hidden" name="OptionId" value="@option.Id" />
+                                <input type="hidden" name="OptionType" value="@OptionTypeFor(group.Title, option)" />
+                                <input name="Title" value="@option.Title" maxlength="80" required />
+                                <input name="QuantityInfo" value="@option.QuantityInfo" maxlength="80" placeholder="Qty / portion" />
+                                <input name="PriceDelta" value="@option.PriceDelta.ToString("0.##")" type="number" min="-100000" step="0.01" />
+                                <label title="Default"><input name="IsDefault" type="checkbox" value="true" checked="@option.IsDefault" /><input name="IsDefault" type="hidden" value="false" /> Default</label>
+                                <label title="Available"><input name="IsAvailable" type="checkbox" value="true" checked="@option.IsAvailable" /><input name="IsAvailable" type="hidden" value="false" /> Active</label>
+                                <label title="Removal option"><input name="IsRemovable" type="checkbox" value="true" checked="@option.IsRemovable" /><input name="IsRemovable" type="hidden" value="false" /> Remove</label>
+                                <button type="submit">Save</button>
+                            </form>
+                            <form asp-action="DeleteOption" method="post" class="inline-form danger-inline">
+                                <input type="hidden" name="menuItemId" value="@Model.Id" />
+                                <input type="hidden" name="optionId" value="@option.Id" />
+                                <button type="submit">Delete option</button>
+                            </form>
+                        }
+                    </div>
+
+                    <form asp-action="AddOption" method="post" class="option-row-editor add-option-row">
+                        <input type="hidden" name="MenuItemId" value="@Model.Id" />
+                        <input type="hidden" name="GroupId" value="@group.Id" />
+                        <input type="hidden" name="OptionType" value="@OptionTypeFor(group.Title, null)" />
+                        <input name="Title" maxlength="80" required placeholder="New option" />
+                        <input name="QuantityInfo" maxlength="80" placeholder="Qty / portion" />
+                        <input name="PriceDelta" type="number" min="-100000" step="0.01" value="0" />
+                        <label><input name="IsDefault" type="checkbox" value="true" /><input name="IsDefault" type="hidden" value="false" /> Default</label>
+                        <label><input name="IsAvailable" type="checkbox" value="true" checked /><input name="IsAvailable" type="hidden" value="false" /> Active</label>
+                        <label><input name="IsRemovable" type="checkbox" value="true" /><input name="IsRemovable" type="hidden" value="false" /> Remove</label>
+                        <button type="submit">Add option</button>
+                    </form>
+
+                    <form asp-action="DeleteOptionGroup" method="post" class="danger-inline">
+                        <input type="hidden" name="menuItemId" value="@Model.Id" />
+                        <input type="hidden" name="groupId" value="@group.Id" />
+                        <button type="submit">Delete group</button>
+                    </form>
+                </article>
+            }
+
+            @if (!Model.OptionGroups.Any())
+            {
+                <article class="form-panel">
+                    <p>No options yet. Add groups like Extras, Remove Ingredients, or Drink Choice.</p>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+
+@functions {
+    private static int OptionSort(string title) => title switch
+    {
+        "Included Menu Items" => 0,
+        "Removable Items" or "Remove Ingredients" or "Removable Ingredients" => 1,
+        "Add-on / Extra Items" or "Extras" or "Optional Extras" => 2,
+        "Drink Choices" or "Drink Choice" => 3,
+        _ => 4
+    };
+
+    private static string OptionTypeFor(string title, MenuItemOption? option)
+    {
+        if (!string.IsNullOrWhiteSpace(option?.OptionType))
+        {
+            return option.OptionType;
+        }
+
+        return title switch
+        {
+            "Included Menu Items" => MenuItemOptionType.Included,
+            "Removable Items" or "Remove Ingredients" or "Removable Ingredients" => MenuItemOptionType.Removable,
+            "Drink Choices" or "Drink Choice" => MenuItemOptionType.Drink,
+            _ => MenuItemOptionType.Extra
+        };
+    }
+}

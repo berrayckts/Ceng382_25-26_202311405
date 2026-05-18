@@ -1,0 +1,44 @@
+@model VerifyEmailViewModel
+@{
+    ViewData["Title"] = "Verify Email";
+}
+
+<section class="auth-shell animated-section">
+    <div class="animated-text-block">
+        <p class="eyebrow">Email Verification</p>
+        <h1>Confirm your email</h1>
+        <p class="soft-copy">Enter the 6-digit code we sent to your email address. Codes expire after 10 minutes.</p>
+    </div>
+    <div class="form-panel animated-section">
+        @if (TempData["Success"] is string success)
+        {
+            <div class="status-message success">@success</div>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <div class="status-message error">@error</div>
+        }
+        @if (ViewBag.DevVerificationCode is string devCode && !string.IsNullOrWhiteSpace(devCode))
+        {
+            <div class="status-message verify-dev-code">
+                <strong>Development code</strong>
+                <span>@devCode</span>
+                <small>SMTP is not configured, so the email code is shown here for local testing.</small>
+            </div>
+        }
+
+        <form asp-action="VerifyEmail" method="post" class="stacked-form">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <label>Email <input asp-for="Email" readonly /></label>
+            <label>Verification code <input asp-for="Code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" /></label>
+            <button class="primary-cta" type="submit">Verify</button>
+        </form>
+
+        <form asp-action="ResendVerificationCode" method="post" class="verify-resend-form">
+            <input name="email" value="@Model.Email" type="hidden" />
+            <button type="submit">Resend code</button>
+        </form>
+
+        <a class="auth-muted-link" asp-action="Login">Back to login</a>
+    </div>
+</section>

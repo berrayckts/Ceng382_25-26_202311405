@@ -1,0 +1,17 @@
+@model TwoFactorViewModel
+@{
+    ViewData["Title"] = "Two-Factor";
+}
+<section class="auth-shell">
+    <div>
+        <p class="eyebrow">Two-Factor Authentication</p>
+        <h1>Enter your email code</h1>
+        <p>Demo emails are written to Admin logs.</p>
+    </div>
+    <form asp-action="TwoFactor" method="post" class="form-panel">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input asp-for="UserId" type="hidden" />
+        <label>Code <input asp-for="Code" inputmode="numeric" /></label>
+        <button class="primary-cta" type="submit">Verify</button>
+    </form>
+</section>

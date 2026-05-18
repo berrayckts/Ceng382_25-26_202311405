@@ -1,0 +1,61 @@
+@model PagedResult<CatererProfile>
+@{
+    ViewData["Title"] = "Caterers";
+}
+<section class="plain-section">
+    @if (TempData["Success"] is string success)
+    {
+        <div class="status-message success">@success</div>
+    }
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Admin</p>
+            <h1>Caterers</h1>
+            <p class="soft-copy">@Model.TotalItems restaurants match the current filters.</p>
+        </div>
+        <form method="get" class="filter-row">
+            <input name="search" value="@Model.Search" placeholder="Search caterers, city, district" />
+            <select name="city">
+                <option value="">All cities</option>
+                @foreach (var city in (IReadOnlyList<string>)ViewBag.Cities)
+                {
+                    <option value="@city" selected="@(ViewBag.City == city)">@city</option>
+                }
+            </select>
+            <select name="approval">
+                <option value="">All approval</option>
+                <option value="approved" selected="@(ViewBag.Approval == "approved")">Approved</option>
+                <option value="pending" selected="@(ViewBag.Approval == "pending")">Pending</option>
+            </select>
+            <button>Filter</button>
+        </form>
+    </div>
+    <div class="table-shell">
+        <table><thead><tr><th>Name</th><th>Location</th><th>Menu</th><th>Orders</th><th>Status</th><th></th></tr></thead><tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>
+                    <strong>@item.Name</strong>
+                    <small>@item.Email</small>
+                </td>
+                <td>@(string.IsNullOrWhiteSpace(item.District) ? item.City : $"{item.District}, {item.City}")</td>
+                <td>@item.MenuItems.Count</td>
+                <td>@item.Orders.Count</td>
+                <td><span class="status-pill @(item.IsApproved ? "ok" : "muted")">@(item.IsApproved ? "Approved" : "Pending")</span></td>
+                <td>
+                    <form asp-action="ToggleCatererApproval" method="post" class="inline-form">
+                        <input name="id" value="@item.Id" type="hidden" />
+                        <input name="search" value="@Model.Search" type="hidden" />
+                        <input name="city" value="@ViewBag.City" type="hidden" />
+                        <input name="approval" value="@ViewBag.Approval" type="hidden" />
+                        <input name="page" value="@Model.Page" type="hidden" />
+                        <button>@(item.IsApproved ? "Move pending" : "Approve")</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody></table>
+    </div>
+    @await Html.PartialAsync("_Pager", Model)
+</section>

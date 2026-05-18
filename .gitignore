@@ -6,6 +6,7 @@ obj/
 *.user
 *.rsuser
 *.suo
+*.lscache
 
 # IDE folders
 .vs/

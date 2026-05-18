@@ -1,0 +1,47 @@
+@model PagedResult<MenuItemEntity>
+@{
+    ViewData["Title"] = "Caterer Menu";
+}
+<section class="plain-section">
+    @if (TempData["Success"] is string message)
+    {
+        <div class="status-message success">@message</div>
+    }
+
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Caterer</p>
+            <h1>Menu manager</h1>
+        </div>
+        <div class="cta-row">
+            <a asp-action="Index" class="primary-cta">Dashboard</a>
+            <a asp-action="CreateMenuItem" class="primary-cta">New item</a>
+        </div>
+    </div>
+    <form method="get" class="filter-row"><input name="search" value="@Model.Search" placeholder="Search menu" /><button>Filter</button></form>
+    <div class="table-shell"><table><thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Options</th><th>Availability</th><th></th></tr></thead><tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+            <td>
+                <strong>@item.Name</strong>
+                <small>@item.Description</small>
+            </td>
+            <td>@item.Category?.Name</td>
+            <td>@item.BasePrice.ToString("C")</td>
+            <td>@item.OptionGroups.Count</td>
+            <td><span class="status-pill @(item.IsActive ? "ok" : "muted")">@(item.IsActive ? "Available" : "Not Available")</span></td>
+            <td class="inline-actions">
+                <a asp-action="ManageOptions" asp-route-menuItemId="@item.Id">Options</a>
+                <a asp-action="EditMenuItem" asp-route-id="@item.Id">Edit</a>
+                <a asp-action="DeleteMenuItem" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    @if (!Model.Items.Any())
+    {
+        <tr><td colspan="6" class="empty-note">No menu items found.</td></tr>
+    }
+    </tbody></table></div>
+    @await Html.PartialAsync("_Pager", Model)
+</section>

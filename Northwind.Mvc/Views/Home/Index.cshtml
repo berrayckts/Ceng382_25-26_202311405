@@ -1,30 +1,265 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeIndexViewModel
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="py-4">
-    <h1 class="display-5 mb-3">Northwind Week 5</h1>
-    <p class="lead">Project is connected to the Northwind database and includes a custom Contact Info module.</p>
-</div>
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
 
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h4">Shippers Contact Info</h2>
-                <p>View and manage Northwind-based shipper contact records built from customer data.</p>
-                <a asp-controller="ShippersContactInfo" asp-action="Index" class="btn btn-primary">Open Shippers Contact Info</a>
-            </div>
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        (() => {
+            const mapElement = document.getElementById('homeNearbyMap');
+            if (!mapElement || typeof L === 'undefined') return;
+
+            const fallbackLocation = {
+                lat: @Model.DefaultLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                lng: @Model.DefaultLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            };
+            const map = L.map(mapElement, {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([fallbackLocation.lat, fallbackLocation.lng], 11);
+            const markerLayer = L.layerGroup().addTo(map);
+            const statusEl = document.getElementById('homeMapStatus');
+            const cityInput = document.getElementById('homeMapCity');
+            const districtInput = document.getElementById('homeMapDistrict');
+            const searchInput = document.getElementById('homeMapSearch');
+            const filterButton = document.getElementById('homeMapFilter');
+            const cityOptions = document.getElementById('homeMapCityOptions');
+            const districtOptions = document.getElementById('homeMapDistrictOptions');
+
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            loadFilterOptions();
+            loadHomeMap();
+
+            cityInput?.addEventListener('change', () => {
+                if (districtInput) districtInput.value = '';
+                loadFilterOptions(cityInput.value.trim());
+            });
+
+            filterButton?.addEventListener('click', () => loadHomeMap());
+            [cityInput, districtInput, searchInput].forEach(input => {
+                input?.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        loadHomeMap();
+                    }
+                });
+            });
+
+            function loadHomeMap() {
+                const params = new URLSearchParams({
+                    lat: fallbackLocation.lat,
+                    lng: fallbackLocation.lng,
+                    radiusKm: '35',
+                    take: '8'
+                });
+                const city = cityInput?.value.trim();
+                const district = districtInput?.value.trim();
+                const search = searchInput?.value.trim();
+
+                if (city) params.set('city', city);
+                if (district) params.set('district', district);
+                if (search) params.set('search', search);
+
+                statusEl.textContent = 'Loading map...';
+
+                fetch(`/Nearby/Locations?${params.toString()}`)
+                .then(response => response.ok ? response.json() : [])
+                .then(items => {
+                    markerLayer.clearLayers();
+                    const bounds = [];
+
+                    items.forEach(item => {
+                        const lat = Number(item.latitude);
+                        const lng = Number(item.longitude);
+                        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+                        bounds.push([lat, lng]);
+                        L.marker([lat, lng])
+                            .addTo(markerLayer)
+                            .bindPopup(`
+                                <strong>${escapeHtml(item.name)}</strong><br>
+                                ${escapeHtml(item.address || 'Address unavailable')}<br>
+                                <a href="/Menu?catererId=${item.id}">View Menu</a>
+                            `);
+                    });
+
+                    if (bounds.length) {
+                        map.fitBounds(bounds, { padding: [22, 22], maxZoom: 13 });
+                        statusEl.textContent = `${bounds.length} caterers found`;
+                    } else {
+                        map.setView([fallbackLocation.lat, fallbackLocation.lng], 11);
+                        statusEl.textContent = 'No caterers are currently available for this filter';
+                    }
+                })
+                .catch(() => {
+                    statusEl.textContent = 'Map could not load';
+                });
+            }
+
+            async function loadFilterOptions(city = '') {
+                const response = await fetch(`/Nearby/FilterOptions?city=${encodeURIComponent(city)}`);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                fillDatalist(cityOptions, data.cities || []);
+                fillDatalist(districtOptions, data.districts || []);
+            }
+
+            function fillDatalist(element, values) {
+                if (!element) return;
+                element.innerHTML = '';
+                values.forEach(value => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    element.appendChild(option);
+                });
+            }
+
+            function escapeHtml(value) {
+                return String(value || '').replace(/[&<>"']/g, match => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[match]));
+            }
+        })();
+    </script>
+}
+
+<section class="mv-hero">
+    <div class="mv-hero-copy animated-text-block">
+        <span class="mv-flourish">Catering & Events</span>
+        <h1>@ProjectBranding.FullName</h1>
+        <p>Discover trusted caterers, curated menus, and elegant event dining across Ankara.</p>
+        <div class="mv-hero-actions">
+            <a asp-controller="Menu" asp-action="Index" class="btn-primary-premium">Explore Menus</a>
+            <a asp-controller="Nearby" asp-action="Index" class="btn-outline-premium">Find Caterers</a>
+        </div>
+    </div>
+</section>
+
+<form asp-controller="Menu" asp-action="Index" method="get" class="mv-search-panel animated-section" aria-label="Caterer search">
+    <label>
+        <span>Location</span>
+        <input name="search" placeholder="Enter city, caterer, or menu" />
+    </label>
+    <button type="submit" class="mv-search-button">Search Caterers</button>
+</form>
+
+<section class="mv-home-grid">
+    <div class="mv-main-column">
+        <div class="mv-section-title animated-text-block">
+            <h2>Featured Caterers</h2>
+            <a asp-controller="Menu" asp-action="Index">View all &rarr;</a>
+        </div>
+
+        <div class="mv-caterer-grid animated-card-grid">
+            @foreach (var caterer in Model.FeaturedCaterers)
+            {
+                var categoryName = caterer.MenuItems.FirstOrDefault()?.Category?.Name ?? "Catering";
+                var cover = MenuImageCatalog.ForCaterer(
+                    caterer.Name,
+                    categoryName,
+                    caterer.MenuItems.FirstOrDefault(m => !string.IsNullOrWhiteSpace(m.ImagePath))?.ImagePath,
+                    caterer.Id);
+                var reviews = caterer.Orders.SelectMany(o => o.Reviews).ToList();
+                var rating = reviews.Any() ? reviews.Average(r => r.CatererRating).ToString("0.0") : "New";
+                var minPrice = caterer.MenuItems.Any() ? caterer.MenuItems.Min(m => m.BasePrice).ToString("C") : "-";
+                <article class="mv-caterer-card">
+                    <img src="@cover" alt="@caterer.Name" onerror="this.src='/images/menu/kanepe.jpeg'" />
+                    <div class="mv-monogram">@categoryName</div>
+                    <div class="mv-card-body">
+                        <h3>@caterer.Name</h3>
+                        <p>@(caterer.District ?? caterer.City) · @(caterer.MenuItems.FirstOrDefault()?.Category?.Name ?? "Catering")</p>
+                        @await Html.PartialAsync("_AvailableDistricts", new AvailableDistrictsViewModel { Districts = AvailableDistrictCatalog.For(caterer), MaxVisible = 3, Variant = "inline" })
+                        <div><span>&#9733; @rating</span><span>From @minPrice</span></div>
+                        <a asp-controller="Menu" asp-action="Index" asp-route-catererId="@caterer.Id">View menus</a>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="mv-section-title animated-text-block">
+            <h2>Signature Menus</h2>
+            <a asp-controller="Menu" asp-action="Index">View all &rarr;</a>
+        </div>
+
+        <div class="mv-menu-list animated-card-grid">
+            @foreach (var item in Model.SignatureMenus)
+            {
+                <article class="mv-menu-card">
+                    <img src="@MenuImageCatalog.ForItem(item.Name, item.Category?.Name, item.ImagePath, item.Id)" alt="@item.Name" onerror="this.src='/images/menu/meze.jpeg'" />
+                    <div>
+                        <h3>@item.Name</h3>
+                        <p>@item.Description</p>
+                        <strong>@item.BasePrice.ToString("C") <span>/ per guest</span></strong>
+                    </div>
+                    <a asp-controller="Menu" asp-action="Details" asp-route-id="@item.Id" aria-label="Customize @item.Name">+</a>
+                </article>
+            }
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h4">Northwind Database</h2>
-                <p>Scaffolded EF Core models are ready under the Models folder.</p>
-                <a asp-controller="Home" asp-action="Privacy" class="btn btn-outline-secondary">Project Info</a>
+    <aside class="mv-side-column">
+        <section class="mv-map-preview animated-section" aria-label="Nearby caterer map">
+            <div class="mv-map-copy">
+                <p class="eyebrow">Map</p>
+                <h2>Discover caterers nearby</h2>
+                <span id="homeMapStatus">Loading map...</span>
             </div>
-        </div>
-    </div>
-</div>
+            <div class="mv-map-filters">
+                <input id="homeMapSearch" type="search" placeholder="Search menu or caterer" />
+                <input id="homeMapCity" list="homeMapCityOptions" placeholder="City" />
+                <datalist id="homeMapCityOptions"></datalist>
+                <input id="homeMapDistrict" list="homeMapDistrictOptions" placeholder="District" />
+                <datalist id="homeMapDistrictOptions"></datalist>
+                <button id="homeMapFilter" type="button">Filter Restaurants</button>
+            </div>
+            <div id="homeNearbyMap" class="mv-map-canvas animated-image"></div>
+            <a asp-controller="Nearby" asp-action="Index" class="mv-map-link">Open full map</a>
+        </section>
+
+        <section class="mv-cart-preview animated-section">
+            <div class="mv-cart-title">
+                <h2>Your Cart</h2>
+                <span>@Model.Cart.Items.Count</span>
+            </div>
+            @if (Model.Cart.Items.Any())
+            {
+                @foreach (var item in Model.Cart.Items.Take(3))
+                {
+                    <div class="mv-cart-item">
+                        <img src="@MenuImageCatalog.ForItem(item.Name, null, item.ImagePath, item.MenuItemId)" alt="@item.Name" onerror="this.src='/images/menu/meze.jpeg'" />
+                        <div>
+                            <strong>@item.Name</strong>
+                            <p>@item.CatererName<br />@item.Quantity guests</p>
+                        </div>
+                        <span>@item.LineTotal.ToString("C")</span>
+                    </div>
+                }
+                <div class="mv-cart-totals">
+                    <div><span>Subtotal</span><strong>@Model.Cart.Total.ToString("C")</strong></div>
+                    <div><span>Service Fee</span><strong>Included</strong></div>
+                    <div class="mv-total"><span>Total</span><strong>@Model.Cart.Total.ToString("C")</strong></div>
+                </div>
+                <a asp-controller="Cart" asp-action="Index" class="mv-checkout">Proceed to Checkout</a>
+            }
+            else
+            {
+                <p class="soft-copy">Your cart is empty. Choose a signature menu or browse caterers to start an order.</p>
+                <a asp-controller="Menu" asp-action="Index" class="mv-checkout">Browse Menus</a>
+            }
+        </section>
+    </aside>
+</section>

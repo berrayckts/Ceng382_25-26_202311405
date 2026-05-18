@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Not Found";
+}
+
+<section class="ce-error-page">
+    <div class="ce-error-card">
+        <p class="ce-eyebrow">404</p>
+        <h1>We could not find that page</h1>
+        <p>Try searching menus or return to the homepage.</p>
+        <div class="d-flex gap-2 flex-wrap">
+            <a class="btn btn-primary" asp-controller="Menu" asp-action="Index">Browse Menus</a>
+            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Home</a>
+        </div>
+    </div>
+</section>

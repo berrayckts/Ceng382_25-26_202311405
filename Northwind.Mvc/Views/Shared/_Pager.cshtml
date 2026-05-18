@@ -1,0 +1,20 @@
+@model dynamic
+@{
+    var currentPage = (int)Model.Page;
+    var totalPages = (int)Model.TotalPages;
+    var search = (string?)Model.Search;
+}
+@if (totalPages > 1)
+{
+    <nav class="pager">
+        @if (currentPage > 1)
+        {
+            <a asp-route-page="@(currentPage - 1)" asp-route-search="@search">Previous</a>
+        }
+        <span>Page @currentPage of @totalPages</span>
+        @if (currentPage < totalPages)
+        {
+            <a asp-route-page="@(currentPage + 1)" asp-route-search="@search">Next</a>
+        }
+    </nav>
+}

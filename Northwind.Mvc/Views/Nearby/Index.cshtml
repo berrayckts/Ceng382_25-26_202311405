@@ -1,0 +1,308 @@
+@model NearbyIndexViewModel
+@{
+    ViewData["Title"] = "Nearby Restaurants";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+}
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const fallbackLocation = {
+            lat: @Model.DefaultLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            lng: @Model.DefaultLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        };
+        const map = L.map('nearbyMap', { preferCanvas: true }).setView([fallbackLocation.lat, fallbackLocation.lng], 11);
+        const markers = new Map();
+        const markerLayer = L.layerGroup().addTo(map);
+        let caterers = [];
+        let userMarker = null;
+        let activeCenter = fallbackLocation;
+        let activeRadiusKm = 35;
+        let activeRequest = null;
+        const userLocationIcon = L.divIcon({
+            className: 'user-location-marker',
+            html: '<span></span>',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+            popupAnchor: [0, -14]
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const statusEl = document.getElementById('nearbyStatus');
+        const resultsEl = document.getElementById('nearbyResults');
+        const radiusInput = document.getElementById('nearbyRadius');
+        const radiusValue = document.getElementById('nearbyRadiusValue');
+        const refreshButton = document.getElementById('nearbyRefresh');
+        const cityInput = document.getElementById('nearbyCity');
+        const districtInput = document.getElementById('nearbyDistrict');
+        const searchInput = document.getElementById('nearbySearch');
+        const filterButton = document.getElementById('nearbyFilter');
+        const useLocationButton = document.getElementById('nearbyUseLocation');
+        const cityOptions = document.getElementById('nearbyCityOptions');
+        const districtOptions = document.getElementById('nearbyDistrictOptions');
+
+        loadFilterOptions();
+        loadLocations(activeCenter.lat, activeCenter.lng);
+        requestUserLocation(false);
+
+        async function loadLocations(lat, lng) {
+            const city = cityInput?.value.trim() || '';
+            const district = districtInput?.value.trim() || '';
+            const search = searchInput?.value.trim() || '';
+            const cacheKey = `nearby:${lat.toFixed(3)}:${lng.toFixed(3)}:${activeRadiusKm}:${city}:${district}:${search}`;
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                caterers = JSON.parse(cached);
+                renderCaterers(caterers);
+                statusEl.textContent = caterers.length ? `${caterers.length} restaurants available` : 'No restaurant coordinates found.';
+            }
+
+            activeRequest?.abort();
+            activeRequest = new AbortController();
+            statusEl.textContent = cached ? 'Refreshing nearby restaurants...' : 'Loading Vellora restaurants...';
+            const params = new URLSearchParams({
+                lat,
+                lng,
+                radiusKm: activeRadiusKm,
+                take: 60,
+                city,
+                district,
+                search
+            });
+            const response = await fetch(`/Nearby/Locations?${params.toString()}`, { signal: activeRequest.signal }).catch(error => {
+                if (error.name === 'AbortError') return null;
+                throw error;
+            });
+            if (!response) return;
+            if (!response.ok) {
+                statusEl.textContent = 'Restaurant locations could not be loaded.';
+                return;
+            }
+            caterers = await response.json();
+            sessionStorage.setItem(cacheKey, JSON.stringify(caterers));
+            renderCaterers(caterers);
+            statusEl.textContent = caterers.length ? `${caterers.length} restaurants available` : 'No caterers match this city, district, or search.';
+            if (!caterers.length || city || district) {
+                focusSelectedPlace(city, district);
+            }
+        }
+
+        async function loadFilterOptions(city = '') {
+            const response = await fetch(`/Nearby/FilterOptions?city=${encodeURIComponent(city)}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            cityOptions.innerHTML = (data.cities || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+            districtOptions.innerHTML = (data.districts || []).map(value => `<option value="${escapeHtml(value)}"></option>`).join('');
+        }
+
+        async function focusSelectedPlace(city, district) {
+            if (!city && !district) return;
+            const params = new URLSearchParams({ city: city || '', district: district || '' });
+            const response = await fetch(`/Nearby/PlaceFocus?${params.toString()}`).catch(() => null);
+            if (!response?.ok) return;
+            const place = await response.json();
+            map.setView([Number(place.latitude), Number(place.longitude)], Number(place.zoom || 12));
+        }
+
+        function setUserLocation(lat, lng) {
+            activeCenter = { lat, lng };
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.marker([lat, lng], { title: 'Your location', icon: userLocationIcon, zIndexOffset: 1000 })
+                .addTo(map)
+                .bindPopup('<strong>Your location</strong>');
+            map.setView([lat, lng], 13);
+            loadLocations(lat, lng);
+        }
+
+        function requestUserLocation(showFeedback = true) {
+            if (!navigator.geolocation) {
+                statusEl.textContent = 'Your browser does not support location. Showing restaurants around the demo center.';
+                return;
+            }
+
+            if (showFeedback) {
+                statusEl.textContent = 'Finding your location...';
+                useLocationButton.disabled = true;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    cityInput.value = '';
+                    districtInput.value = '';
+                    loadFilterOptions();
+                    sessionStorage.clear();
+                    setUserLocation(position.coords.latitude, position.coords.longitude);
+                    if (showFeedback) {
+                        statusEl.textContent = 'Showing restaurants nearest to your location.';
+                        useLocationButton.disabled = false;
+                    }
+                },
+                () => {
+                    map.setView([fallbackLocation.lat, fallbackLocation.lng], 13);
+                    statusEl.textContent = 'Location permission was not granted. Showing restaurants around the demo center.';
+                    useLocationButton.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 8000 });
+        }
+
+        function renderCaterers(items) {
+            resultsEl.innerHTML = '';
+            markerLayer.clearLayers();
+            markers.clear();
+            const fragment = document.createDocumentFragment();
+
+            if (!items.length) {
+                resultsEl.innerHTML = `
+                    <article class="nearby-empty-state">
+                        <h2>No restaurants found</h2>
+                        <p>Try another city, district, or menu search while we keep the map focused on your selected area.</p>
+                    </article>`;
+                return;
+            }
+
+            const boundsPoints = [];
+            items.forEach(item => {
+                boundsPoints.push([Number(item.latitude), Number(item.longitude)]);
+                const marker = L.marker([Number(item.latitude), Number(item.longitude)])
+                    .addTo(markerLayer)
+                    .bindPopup(`
+                        <strong>${escapeHtml(item.name)}</strong><br>
+                        ${escapeHtml(item.address || 'Address unavailable')}<br>
+                        ${escapeHtml(item.category || 'Catering')}<br>
+                        ${Number(item.distanceKm || 0).toFixed(1)} km away<br>
+                        ${item.rating ? `Rating ${escapeHtml(item.rating)}` : escapeHtml(item.priceInfo || '')}<br>
+                        <a href="/Menu?catererId=${item.id}">View Menu</a>
+                    `);
+                marker.on('click', () => highlightCard(item.id));
+                markers.set(item.id, marker);
+
+                const card = document.createElement('article');
+                card.className = 'nearby-card caterer-location-card';
+                card.id = `caterer-${item.id}`;
+                card.innerHTML = `
+                    <div>
+                        <h2>${escapeHtml(item.name)}</h2>
+                        <p>${escapeHtml(item.address || 'Address unavailable')}</p>
+                        <span>${Number(item.distanceKm || 0).toFixed(1)} km - ${escapeHtml(item.category || 'Catering')} ${item.rating ? `- Rating ${escapeHtml(item.rating)}` : ''} ${item.priceInfo ? `- ${escapeHtml(item.priceInfo)}` : ''}</span>
+                        <div class="nearby-actions">
+                            <button type="button" data-map="${item.id}">Show on Map</button>
+                            <a href="/Menu?catererId=${item.id}">View Menu</a>
+                        </div>
+                    </div>`;
+                fragment.appendChild(card);
+            });
+            resultsEl.appendChild(fragment);
+
+            if (items.length) {
+                const bounds = L.latLngBounds(userMarker ? [[activeCenter.lat, activeCenter.lng], ...boundsPoints] : boundsPoints);
+                map.fitBounds(bounds.pad(0.2));
+            }
+        }
+
+        let radiusTimer = null;
+        radiusInput?.addEventListener('input', () => {
+            activeRadiusKm = Number(radiusInput.value);
+            radiusValue.textContent = `${activeRadiusKm} km`;
+            clearTimeout(radiusTimer);
+            radiusTimer = setTimeout(() => loadLocations(activeCenter.lat, activeCenter.lng), 350);
+        });
+
+        refreshButton?.addEventListener('click', () => {
+            sessionStorage.clear();
+            loadLocations(activeCenter.lat, activeCenter.lng);
+        });
+
+        useLocationButton?.addEventListener('click', () => {
+            requestUserLocation(true);
+        });
+
+        cityInput?.addEventListener('change', () => {
+            districtInput.value = '';
+            loadFilterOptions(cityInput.value.trim());
+            sessionStorage.clear();
+            loadLocations(activeCenter.lat, activeCenter.lng);
+        });
+
+        districtInput?.addEventListener('change', () => {
+            sessionStorage.clear();
+            loadLocations(activeCenter.lat, activeCenter.lng);
+        });
+
+        filterButton?.addEventListener('click', () => {
+            sessionStorage.clear();
+            loadLocations(activeCenter.lat, activeCenter.lng);
+        });
+
+        [cityInput, districtInput, searchInput].forEach(input => input?.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                filterButton.click();
+            }
+        }));
+
+        resultsEl.addEventListener('click', event => {
+            const button = event.target.closest('[data-map]');
+            if (!button) return;
+            const id = Number(button.dataset.map);
+            const marker = markers.get(id);
+            const item = caterers.find(c => c.id === id);
+            if (!marker || !item) return;
+            map.setView([Number(item.latitude), Number(item.longitude)], 15);
+            marker.openPopup();
+            highlightCard(id);
+        });
+
+        function highlightCard(id) {
+            document.querySelectorAll('.nearby-card').forEach(card => card.classList.remove('active'));
+            document.getElementById(`caterer-${id}`)?.classList.add('active');
+        }
+
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
+        }
+    </script>
+}
+
+<section class="nearby-shell">
+    <div class="nearby-map-panel animated-image">
+        <div id="nearbyMap" class="nearby-map leaflet-map"></div>
+    </div>
+    <aside class="nearby-list-panel">
+        <div class="nearby-panel-header animated-text-block">
+            <p class="eyebrow">Nearby Restaurants</p>
+            <h1>Discover Vellora caterers around you</h1>
+        </div>
+        <div class="nearby-controls animated-section">
+            <label>
+                Search
+                <input id="nearbySearch" type="search" placeholder="Search caterer, menu, or option" />
+            </label>
+            <label>
+                City
+                <input id="nearbyCity" list="nearbyCityOptions" placeholder="Choose city" />
+                <datalist id="nearbyCityOptions"></datalist>
+            </label>
+            <label>
+                District
+                <input id="nearbyDistrict" list="nearbyDistrictOptions" placeholder="Choose district" />
+                <datalist id="nearbyDistrictOptions"></datalist>
+            </label>
+            <label>
+                Radius <strong id="nearbyRadiusValue">35 km</strong>
+                <input id="nearbyRadius" type="range" min="5" max="100" step="5" value="35" />
+            </label>
+            <button id="nearbyFilter" type="button">Filter Restaurants</button>
+            <button id="nearbyUseLocation" type="button" class="nearby-location-button">Use my location</button>
+            <button id="nearbyRefresh" type="button">Refresh</button>
+        </div>
+        <div id="nearbyStatus" class="nearby-status animated-section">Loading...</div>
+        <div id="nearbyResults" class="nearby-results animated-card-grid"></div>
+    </aside>
+</section>

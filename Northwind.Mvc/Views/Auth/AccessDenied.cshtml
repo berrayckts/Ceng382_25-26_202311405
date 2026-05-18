@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Access Denied";
+    var role = (string)(ViewBag.CurrentRole ?? "Guest");
+}
+
+<section class="ce-error-page">
+    <div class="ce-error-card">
+        <p class="ce-eyebrow">Restricted Area</p>
+        <h1>Access denied</h1>
+        <p>Your current role is <strong>@role</strong>. This page belongs to a different workspace.</p>
+        <div class="d-flex gap-2 flex-wrap">
+            @if (User.IsInRole(AppRole.Admin))
+            {
+                <a class="btn btn-primary" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Go to Admin Panel</a>
+            }
+            else if (User.IsInRole(AppRole.RestaurantOwner) || User.IsInRole(AppRole.LegacyCaterer))
+            {
+                <a class="btn btn-primary" asp-area="Owner" asp-controller="Dashboard" asp-action="Index">Go to My Restaurant</a>
+            }
+            else if (User.IsInRole(AppRole.Customer) || User.IsInRole(AppRole.LegacyUser))
+            {
+                <a class="btn btn-primary" asp-controller="UserDashboard" asp-action="Index">Go to Dashboard</a>
+            }
+            else
+            {
+                <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Login</a>
+            }
+            <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Home</a>
+        </div>
+    </div>
+</section>

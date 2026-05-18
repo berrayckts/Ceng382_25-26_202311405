@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Owner Dashboard";
+    var restaurant = (CatererProfile?)ViewBag.Restaurant;
+}
+
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <p class="ce-eyebrow">Restaurant Owner</p>
+        <h1>@restaurant?.Name</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-area="Owner" asp-controller="Menu" asp-action="Edit">Add menu item</a>
+        <a class="btn btn-outline-primary" asp-area="Owner" asp-controller="Settings" asp-action="Index">Settings</a>
+    </div>
+</div>
+
+<section class="ce-kpi-grid mb-4">
+    <article class="ce-kpi-card"><span>Today's orders</span><strong>@ViewBag.OrdersToday</strong></article>
+    <article class="ce-kpi-card"><span>Today's revenue</span><strong>@(((decimal)ViewBag.RevenueToday).ToString("C"))</strong></article>
+    <article class="ce-kpi-card"><span>Pending orders</span><strong>@ViewBag.PendingOrders</strong></article>
+    <article class="ce-kpi-card"><span>Menu item count</span><strong>@ViewBag.MenuCount</strong></article>
+</section>
+
+<section class="ce-panel mb-4">
+    <h2 class="h5 mb-3">Pending orders</h2>
+    <div class="table-responsive admin-table-wrap">
+        <table class="admin-data-table">
+            <thead><tr><th>#</th><th>Customer</th><th>Status</th><th>Total</th><th></th></tr></thead>
+            <tbody>
+            @foreach (OrderEntity order in ViewBag.PendingList)
+            {
+                <tr>
+                    <td>@order.Id</td>
+                    <td>@order.Customer?.DisplayName</td>
+                    <td><span class="status-pill muted">@order.Status</span></td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td><a class="secondary-cta" asp-area="Owner" asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">Open</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="ce-panel">
+    <h2 class="h5 mb-3">Quick links</h2>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" asp-area="Owner" asp-controller="Menu" asp-action="Index">Edit Menu</a>
+        <a class="btn btn-outline-primary" asp-area="Owner" asp-controller="Orders" asp-action="Index">View All Orders</a>
+        <a class="btn btn-outline-primary" asp-area="Owner" asp-controller="Settings" asp-action="Index">Restaurant Settings</a>
+    </div>
+</section>

@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Caterer Dashboard";
+    var caterer = (CatererProfile)ViewBag.Caterer;
+    var profileComplete = (bool)ViewBag.ProfileComplete;
+}
+<section class="plain-section">
+    @if (TempData["Success"] is string message)
+    {
+        <div class="status-message success">@message</div>
+    }
+
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Caterer Dashboard</p>
+            <h1>@caterer.Name</h1>
+            <p class="soft-copy">Manage your catering profile, menu availability, and incoming event orders.</p>
+        </div>
+        <div class="cta-row">
+            <a asp-action="Profile" class="primary-cta">Edit restaurant profile</a>
+            <a asp-action="CreateMenuItem" class="primary-cta">New menu item</a>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <a asp-action="Profile"><span>Profile status</span><strong>@(profileComplete ? "Ready" : "Needs info")</strong></a>
+        <a asp-action="MenuItems"><span>Menu items</span><strong>@ViewBag.MenuCount</strong></a>
+        <a asp-action="MenuItems"><span>Available items</span><strong>@ViewBag.AvailableMenuCount</strong></a>
+        <a asp-controller="Orders" asp-action="Index"><span>Open orders</span><strong>@ViewBag.OpenOrders</strong></a>
+    </div>
+
+    <div class="dashboard-grid">
+        <article class="dashboard-panel">
+            <h2>My Restaurant</h2>
+            <p>@(string.IsNullOrWhiteSpace(caterer.BrandStory) ? "Add a short story so customers understand your catering style." : caterer.BrandStory)</p>
+            <dl class="compact-details">
+                <div><dt>Address</dt><dd>@(string.IsNullOrWhiteSpace(caterer.AddressLine) ? "Not set" : caterer.AddressLine)</dd></div>
+                <div><dt>District</dt><dd>@(string.IsNullOrWhiteSpace(caterer.District) ? "Not set" : caterer.District)</dd></div>
+                <div><dt>City</dt><dd>@(string.IsNullOrWhiteSpace(caterer.City) ? "Not set" : caterer.City)</dd></div>
+            </dl>
+            <a asp-action="Profile" class="primary-cta">Update profile</a>
+        </article>
+
+        <article class="dashboard-panel">
+            <h2>Menu Management</h2>
+            <p>Keep catering packages, extras, removable ingredients, and availability up to date.</p>
+            <dl class="compact-details">
+                <div><dt>Total items</dt><dd>@ViewBag.MenuCount</dd></div>
+                <div><dt>Available</dt><dd>@ViewBag.AvailableMenuCount</dd></div>
+                <div><dt>Revenue</dt><dd>@(((decimal)ViewBag.Revenue).ToString("C"))</dd></div>
+            </dl>
+            <a asp-action="MenuItems" class="primary-cta">Manage menu</a>
+        </article>
+
+        <article class="dashboard-panel">
+            <h2>Location</h2>
+            <p>Customers discover nearby caterers from your saved coordinates.</p>
+            <dl class="compact-details">
+                <div><dt>Latitude</dt><dd>@caterer.Latitude</dd></div>
+                <div><dt>Longitude</dt><dd>@caterer.Longitude</dd></div>
+            </dl>
+            <a asp-action="Profile" class="primary-cta">Set location</a>
+        </article>
+    </div>
+
+    <h2>Recent orders</h2>
+    <div class="log-list">
+        @foreach (OrderEntity order in ViewBag.RecentOrders)
+        {
+            <a asp-controller="Orders" asp-action="Details" asp-route-id="@order.Id">#@order.Id - @order.Customer?.DisplayName - @order.Status - @order.TotalAmount.ToString("C")</a>
+        }
+        @if (!((IEnumerable<OrderEntity>)ViewBag.RecentOrders).Any())
+        {
+            <span class="empty-note">No recent orders yet.</span>
+        }
+    </div>
+</section>
